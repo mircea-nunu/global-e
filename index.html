@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Assignment Dashboard v1.7</title>
+    <script src="https://cdn.plot.ly/plotly-2.29.2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <style>
+      body { font-family: Arial, Helvetica, sans-serif; margin: 24px; background:#fff; color:#111 }
+      h1 { margin-bottom: 6px }
+      .chart { width: 100%; max-width: 900px; height: 420px; margin-bottom: 28px }
+      .grid { display:flex; flex-direction:column }
+      .note { color:#555; font-size:0.9rem }
+    </style>
+  </head>
+  <body>
+    <h1>Assignment — Interactive Dashboards</h1>
+    <p class="note">Interactive charts powered by Plotly; data loaded from CSV exports in this repo.</p>
+
+    <div id="monthly" class="chart"></div>
+    <div id="top_products" class="chart"></div>
+    <div id="segment_channel" class="chart"></div>
+    <div id="customers" class="chart"></div>
+
+    <script>
+      const base = './exports/';
+      const files = {
+        monthly: base + 'monthly_revenue.csv',
+        top: base + 'top_products.csv',
+        segment: base + 'revenue_by_segment_channel.csv',
+        customers: base + 'customer_rank.csv'
+      };
+
+      function parseCSV(url){
+        return new Promise((res, rej) => {
+          Papa.parse(url, { download: true, header: true, dynamicTyping: true, complete: (r)=>res(r.data), error: rej });
+        });
+      }
+
+      async function draw(){
+        const [monthly, top, segment, customers] = await Promise.all([
+          parseCSV(files.monthly),
+          parseCSV(files.top),
+          parseCSV(files.segment),
+          parseCSV(files.customers)
+        ]);
+
+        // Monthly revenue
+        const months = monthly.map(r => r.sales_month);
+        const rev = monthly.map(r => r.total_revenue_usd || r.total_revenue);
+        Plotly.newPlot('monthly', [{ x: months, y: rev, type: 'scatter', mode: 'lines+markers', marker:{color:'#1f77b4'} }], { title: 'Monthly Revenue (Delivered)' });
+
+        // Top products
+        const prodNames = top.map(r => r.product_name || r.product_id);
+        const prodRev = top.map(r => r.revenue || r.revenue_usd);
+        Plotly.newPlot('top_products', [{ x: prodRev, y: prodNames, type: 'bar', orientation: 'h', marker:{color:'#2ca02c'} }], { title: 'Top Products by Revenue', margin:{l:220} });
+
+        // Revenue by segment & channel (grouped bar)
+        // pivot
+        const segChannels = {};
+        segment.forEach(r=>{
+          const seg = r.segment || r.customer_segment;
+          const ch = r.channel;
+          const val = r.revenue || r.revenue_usd;
+          segChannels[seg] = segChannels[seg] || {}; segChannels[seg][ch] = (segChannels[seg][ch]||0)+ (val||0);
+        });
+        const channels = Array.from(new Set(segment.map(r=>r.channel)));
+        const segs = Object.keys(segChannels);
+        const traces = channels.map(ch=>({
+          x: segs,
+          y: segs.map(s => segChannels[s][ch] || 0),
+          name: ch,
+          type: 'bar'
+        }));
+        Plotly.newPlot('segment_channel', traces, { title: 'Revenue by Segment and Channel', barmode: 'group' });
+
+        // Customer rank
+        const custNames = customers.map(r => r.full_name || r.customer_id);
+        const custRev = customers.map(r => r.total_revenue_usd || r.total_revenue || r.totalRevenue);
+        Plotly.newPlot('customers', [{ x: custRev, y: custNames, type: 'bar', orientation: 'h', marker:{color:'#d62728'} }], { title: 'Top Customers by Revenue', margin:{l:220} });
+      }
+
+      draw().catch(e=>{ document.body.insertAdjacentHTML('beforeend', '<p style="color:red">Error loading charts: '+e+'</p>'); console.error(e); });
+    </script>
+  </body>
+</html>
