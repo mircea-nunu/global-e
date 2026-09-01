@@ -4,81 +4,407 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Assignment Dashboard v1.7</title>
-    <script src="https://cdn.plot.ly/plotly-2.29.2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    <style>
-      body { font-family: Arial, Helvetica, sans-serif; margin: 24px; background:#fff; color:#111 }
-      h1 { margin-bottom: 6px }
-      .chart { width: 100%; max-width: 900px; height: 420px; margin-bottom: 28px }
-      .grid { display:flex; flex-direction:column }
-      .note { color:#555; font-size:0.9rem }
-    </style>
-  </head>
-  <body>
-    <h1>Assignment — Interactive Dashboards</h1>
-    <p class="note">Interactive charts powered by Plotly; data loaded from CSV exports in this repo.</p>
-
-    <div id="monthly" class="chart"></div>
-    <div id="top_products" class="chart"></div>
-    <div id="segment_channel" class="chart"></div>
-    <div id="customers" class="chart"></div>
-
     <script>
-      const base = './exports/';
-      const files = {
-        monthly: base + 'monthly_revenue.csv',
-        top: base + 'top_products.csv',
-        segment: base + 'revenue_by_segment_channel.csv',
-        customers: base + 'customer_rank.csv'
-      };
+      function loadScript(src) {
+        return new Promise((resolve, reject) => {
+          const existing = document.querySelector('script[src="' + src + '"]');
+          if (existing) {
+            if (window.Plotly) {
+              resolve();
+            } else {
+              existing.addEventListener('load', () => resolve(), { once: true });
+              existing.addEventListener('error', () => reject(new Error('Script load failed: ' + src)), { once: true });
+            }
+            return;
+          }
 
-      function parseCSV(url){
-        return new Promise((res, rej) => {
-          Papa.parse(url, { download: true, header: true, dynamicTyping: true, complete: (r)=>res(r.data), error: rej });
+          const el = document.createElement('script');
+          el.src = src;
+          el.async = true;
+          el.onload = () => resolve();
+          el.onerror = () => reject(new Error('Script load failed: ' + src));
+          document.head.appendChild(el);
         });
       }
 
+      async function ensurePlotly() {
+        const candidates = [
+          'https://cdn.plot.ly/plotly-2.29.2.min.js',
+          'https://cdn.jsdelivr.net/npm/plotly.js-dist@2.35.2/plotly.min.js'
+        ];
+
+        for (const src of candidates) {
+          try {
+            await loadScript(src);
+            if (window.Plotly) return;
+          } catch (error) {
+            console.warn(error.message);
+          }
+        }
+
+        throw new Error('Plotly failed to load from both CDNs');
+      }
+    </script>
+    <style>
+      :root {
+        --bg: #0a0e17;
+        --panel: #141823;
+        --panel-hover: #1a1f2e;
+        --border: #1f2639;
+        --text: #e8eaed;
+        --muted: #9ca3af;
+        --primary: #3b82f6;
+        --primary-soft: rgba(59, 130, 246, 0.15);
+        --success: #10b981;
+        --warning: #f59e0b;
+        --shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background: linear-gradient(135deg, #0a0e17 0%, #0f1419 50%, #141823 100%);
+        color: var(--text);
+        font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+
+      .page {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 28px 20px 50px;
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .brand {
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: #ffffff;
+      }
+
+      .brand span {
+        color: var(--primary);
+      }
+
+      .tag {
+        background: var(--primary-soft);
+        border: 1px solid rgba(59, 130, 246, 0.25);
+        color: var(--primary);
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .hero {
+        background: linear-gradient(135deg, rgba(20, 24, 35, 0.8), rgba(26, 31, 46, 0.8));
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), var(--shadow);
+        padding: 24px;
+        margin-bottom: 18px;
+      }
+
+      h1 {
+        margin: 0 0 6px;
+        font-size: clamp(1.6rem, 3vw, 2.4rem);
+        letter-spacing: -0.03em;
+        color: #ffffff;
+      }
+
+      .note {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+        line-height: 1.4;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(160px, 1fr));
+        gap: 12px;
+        margin: 18px 0 24px;
+      }
+
+      .stat {
+        background: linear-gradient(135deg, var(--panel) 0%, var(--panel-hover) 100%);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 16px rgba(0, 0, 0, 0.2);
+        padding: 14px 14px 12px;
+        transition: all 0.25s ease;
+      }
+
+      .stat:hover {
+        transform: translateY(-2px);
+        border-color: rgba(59, 130, 246, 0.3);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 12px 24px rgba(59, 130, 246, 0.1);
+      }
+
+      .stat-label {
+        font-size: 0.7rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 6px;
+        font-weight: 600;
+      }
+
+      .stat-value {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #ffffff;
+        line-height: 1.1;
+      }
+
+      .chart-grid {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 16px;
+      }
+
+      .panel {
+        background: linear-gradient(135deg, var(--panel) 0%, var(--panel-hover) 100%);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), var(--shadow);
+        padding: 16px;
+      }
+
+      .panel .chart {
+        width: 100%;
+        height: 360px;
+        margin: 0;
+      }
+
+      .panel.full {
+        margin-top: 16px;
+      }
+
+      .panel h2 {
+        margin: 0 0 10px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #ffffff;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      @media (max-width: 980px) {
+        .stats, .chart-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="topbar">
+        <div class="brand"><span>global-e</span></div>
+        <div class="tag">Assignment Dashboard</div>
+      </div>
+
+      <header class="hero">
+        <h1>Assignment — Interactive Dashboards</h1>
+        <p class="note">Interactive charts powered by Plotly; data loaded from CSV exports in this repo.</p>
+      </header>
+
+      <section class="stats">
+        <div class="stat">
+          <div class="stat-label">Revenue</div>
+          <div class="stat-value" id="kpiRevenue">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Top Product</div>
+          <div class="stat-value" id="kpiProduct">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Segment</div>
+          <div class="stat-value" id="kpiSegment">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Top Customer</div>
+          <div class="stat-value" id="kpiCustomer">—</div>
+        </div>
+      </section>
+
+      <div class="chart-grid">
+        <div class="panel">
+          <h2>Monthly Revenue</h2>
+          <div id="monthly" class="chart"></div>
+        </div>
+        <div class="panel">
+          <h2>Top Products by Revenue</h2>
+          <div id="top_products" class="chart"></div>
+        </div>
+      </div>
+
+      <div class="chart-grid" style="margin-top: 22px;">
+        <div class="panel">
+          <h2>Revenue by Segment and Channel</h2>
+          <div id="segment_channel" class="chart"></div>
+        </div>
+        <div class="panel">
+          <h2>Top Customers by Revenue</h2>
+          <div id="customers" class="chart"></div>
+        </div>
+      </div>
+
+    <script>
+      const remoteBase = 'https://raw.githubusercontent.com/mircea-nunu/global-e/main/exports/';
+      const localBase = './exports/';
+      const files = {
+        monthly: 'monthly_revenue.csv',
+        top: 'top_products.csv',
+        segment: 'revenue_by_segment_channel.csv',
+        customers: 'customer_rank.csv'
+      };
+
+      function parseCSV(url){
+        return fetch(url)
+          .then(response => {
+            if (!response.ok) throw new Error('CSV fetch failed: ' + url);
+            return response.text();
+          })
+          .then(text => Papa.parse(text, { header: true, dynamicTyping: true }).data);
+      }
+
+      async function loadData(fileKey){
+        const remoteUrl = remoteBase + files[fileKey];
+        const localUrl = localBase + files[fileKey];
+
+        try {
+          return await parseCSV(remoteUrl);
+        } catch (remoteError) {
+          return await parseCSV(localUrl);
+        }
+      }
+
+      function formatMoney(v){
+        return '$' + Number(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
+      }
+
       async function draw(){
+        await ensurePlotly();
+
         const [monthly, top, segment, customers] = await Promise.all([
-          parseCSV(files.monthly),
-          parseCSV(files.top),
-          parseCSV(files.segment),
-          parseCSV(files.customers)
+          loadData('monthly'),
+          loadData('top'),
+          loadData('segment'),
+          loadData('customers')
         ]);
+
+        const revenueTotal = monthly.reduce((sum, r) => sum + Number(r.total_revenue_usd || r.total_revenue || 0), 0);
+        const topProduct = top.reduce((best, curr) => {
+          const value = Number(curr.revenue || curr.revenue_usd || 0);
+          if (!best || value > Number(best.revenue || best.revenue_usd || 0)) return curr;
+          return best;
+        }, null);
+        const segmentTotal = segment.reduce((map, row) => {
+          const seg = row.segment || row.customer_segment || 'Unknown';
+          const value = Number(row.revenue || row.revenue_usd || 0);
+          map[seg] = (map[seg] || 0) + value;
+          return map;
+        }, {});
+        const bestSegment = Object.entries(segmentTotal).sort((a, b) => b[1] - a[1])[0];
+        const bestCustomer = customers.reduce((best, curr) => {
+          const value = Number(curr.total_revenue_usd || curr.total_revenue || curr.totalRevenue || 0);
+          if (!best || value > Number(best.total_revenue_usd || best.total_revenue || best.totalRevenue || 0)) return curr;
+          return best;
+        }, null);
+
+        document.getElementById('kpiRevenue').textContent = formatMoney(revenueTotal);
+        document.getElementById('kpiProduct').textContent = topProduct ? (topProduct.product_name || topProduct.product_id) : '—';
+        document.getElementById('kpiSegment').textContent = bestSegment ? bestSegment[0] : '—';
+        document.getElementById('kpiCustomer').textContent = bestCustomer ? (bestCustomer.full_name || bestCustomer.customer_id) : '—';
+
+        // Dark theme layout
+        const darkLayout = {
+          plot_bgcolor: 'rgba(20, 24, 35, 0.5)',
+          paper_bgcolor: 'transparent',
+          font: { family: '"Segoe UI", sans-serif', color: '#9ca3af', size: 11 },
+          title: { font: { size: 14, color: '#e8eaed', family: '"Segoe UI", sans-serif' }, x: 0, xanchor: 'left' },
+          margin: { l: 50, r: 20, t: 35, b: 40 },
+          xaxis: { gridcolor: 'rgba(255, 255, 255, 0.05)', zeroline: false, showline: true, linewidth: 1, linecolor: 'rgba(255, 255, 255, 0.1)' },
+          yaxis: { gridcolor: 'rgba(255, 255, 255, 0.05)', zeroline: false, showline: true, linewidth: 1, linecolor: 'rgba(255, 255, 255, 0.1)' },
+          showlegend: true,
+          legend: { x: 1, y: 1, xanchor: 'right', yanchor: 'top', bgcolor: 'rgba(0, 0, 0, 0.3)', bordercolor: 'rgba(255, 255, 255, 0.1)', borderwidth: 1 }
+        };
 
         // Monthly revenue
         const months = monthly.map(r => r.sales_month);
         const rev = monthly.map(r => r.total_revenue_usd || r.total_revenue);
-        Plotly.newPlot('monthly', [{ x: months, y: rev, type: 'scatter', mode: 'lines+markers', marker:{color:'#1f77b4'} }], { title: 'Monthly Revenue (Delivered)' });
+        const monthlyLayout = Object.assign({}, darkLayout, { title: 'Monthly Revenue $', showlegend: false });
+        Plotly.newPlot('monthly', [{ x: months, y: rev, type: 'scatter', mode: 'lines+markers', name: 'Revenue', line: {color:'#3b82f6', width: 2.5}, marker:{color:'#3b82f6', size: 5} }], monthlyLayout);
 
         // Top products
-        const prodNames = top.map(r => r.product_name || r.product_id);
-        const prodRev = top.map(r => r.revenue || r.revenue_usd);
-        Plotly.newPlot('top_products', [{ x: prodRev, y: prodNames, type: 'bar', orientation: 'h', marker:{color:'#2ca02c'} }], { title: 'Top Products by Revenue', margin:{l:220} });
+        const topProductsSorted = [...top].sort((a, b) => Number(b.revenue || b.revenue_usd || 0) - Number(a.revenue || a.revenue_usd || 0));
+        const prodNames = topProductsSorted.map(r => r.product_name || r.product_id);
+        const prodRev = topProductsSorted.map(r => r.revenue || r.revenue_usd);
+        const prodLayout = Object.assign({}, darkLayout, { 
+          title: 'Top Products by Revenue $',
+          margin:{l:200, r:60, t:35, b:40},
+          showlegend: false,
+          xaxis: { gridcolor: 'rgba(255, 255, 255, 0.05)', zeroline: false, showline: true, linewidth: 1.5, linecolor: '#4b5563' },
+          yaxis:{ categoryorder:'array', categoryarray: prodNames, autorange:'reversed', gridcolor: 'rgba(255, 255, 255, 0.05)', showline: true, linewidth: 1.5, linecolor: '#4b5563' }
+        });
+        Plotly.newPlot('top_products', [{ x: prodRev, y: prodNames, type: 'bar', orientation: 'h', name: 'Revenue', marker:{color:'#10b981'}, text: prodRev.map(v => '$' + Number(v || 0).toLocaleString()), textposition: 'outside', textfont: {color: '#9ca3af', size: 10} }], prodLayout);
 
         // Revenue by segment & channel (grouped bar)
-        // pivot
         const segChannels = {};
         segment.forEach(r=>{
           const seg = r.segment || r.customer_segment;
           const ch = r.channel;
           const val = r.revenue || r.revenue_usd;
-          segChannels[seg] = segChannels[seg] || {}; segChannels[seg][ch] = (segChannels[seg][ch]||0)+ (val||0);
+          if (seg && ch) {
+            segChannels[seg] = segChannels[seg] || {}; 
+            segChannels[seg][ch] = (segChannels[seg][ch]||0)+ (val||0);
+          }
         });
-        const channels = Array.from(new Set(segment.map(r=>r.channel)));
-        const segs = Object.keys(segChannels);
-        const traces = channels.map(ch=>({
+        const channels = Array.from(new Set(segment.map(r=>r.channel).filter(ch => ch)));
+        const segs = Object.keys(segChannels).sort();
+        const colorPalette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+        const traces = channels.map((ch, idx)=>({
           x: segs,
           y: segs.map(s => segChannels[s][ch] || 0),
           name: ch,
-          type: 'bar'
+          type: 'bar',
+          marker: { color: colorPalette[idx % colorPalette.length] },
+          text: segs.map(s => '$' + Number(segChannels[s][ch] || 0).toLocaleString()),
+          textposition: 'auto',
+          textfont: {color: '#e8eaed', size: 9}
         }));
-        Plotly.newPlot('segment_channel', traces, { title: 'Revenue by Segment and Channel', barmode: 'group' });
+        const segLayout = Object.assign({}, darkLayout, { title: 'Revenue by Segment & Channel $', barmode: 'group', xaxis: { gridcolor: 'rgba(255, 255, 255, 0.05)', zeroline: false, showline: true, linewidth: 1.5, linecolor: '#4b5563' } });
+        Plotly.newPlot('segment_channel', traces, segLayout);
 
         // Customer rank
-        const custNames = customers.map(r => r.full_name || r.customer_id);
-        const custRev = customers.map(r => r.total_revenue_usd || r.total_revenue || r.totalRevenue);
-        Plotly.newPlot('customers', [{ x: custRev, y: custNames, type: 'bar', orientation: 'h', marker:{color:'#d62728'} }], { title: 'Top Customers by Revenue', margin:{l:220} });
+        const customersSorted = [...customers].sort((a, b) => Number(b.total_revenue_usd || b.total_revenue || b.totalRevenue || 0) - Number(a.total_revenue_usd || a.total_revenue || a.totalRevenue || 0));
+        const custNames = customersSorted.map(r => r.full_name || r.customer_id);
+        const custRev = customersSorted.map(r => r.total_revenue_usd || r.total_revenue || r.totalRevenue);
+        const custLayout = Object.assign({}, darkLayout, {
+          title: 'Top Customers by Revenue $',
+          margin:{l:200, r:60, t:35, b:40},
+          showlegend: false,
+          xaxis: { gridcolor: 'rgba(255, 255, 255, 0.05)', zeroline: false, showline: true, linewidth: 1.5, linecolor: '#4b5563' },
+          yaxis:{ categoryorder:'array', categoryarray: custNames, autorange:'reversed', gridcolor: 'rgba(255, 255, 255, 0.05)', showline: true, linewidth: 1.5, linecolor: '#4b5563' }
+        });
+        Plotly.newPlot('customers', [{ x: custRev, y: custNames, type: 'bar', orientation: 'h', name: 'Revenue', marker:{color:'#f59e0b'}, text: custRev.map(v => '$' + Number(v || 0).toLocaleString()), textposition: 'outside', textfont: {color: '#9ca3af', size: 10} }], custLayout);
       }
 
       draw().catch(e=>{ document.body.insertAdjacentHTML('beforeend', '<p style="color:red">Error loading charts: '+e+'</p>'); console.error(e); });
