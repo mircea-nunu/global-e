@@ -357,6 +357,7 @@
         const topProductsSorted = [...top].sort((a, b) => Number(b.revenue || b.revenue_usd || 0) - Number(a.revenue || a.revenue_usd || 0));
         const prodNames = topProductsSorted.map(r => r.product_name || r.product_id);
         const prodRev = topProductsSorted.map(r => r.revenue || r.revenue_usd);
+        const prodPct = topProductsSorted.map(r => Number(r.pct_share || r.percent_share || 0));
         const prodLayout = Object.assign({}, darkLayout, { 
           title: 'Top Products by Revenue $',
           margin:{l:200, r:60, t:35, b:40},
@@ -364,7 +365,19 @@
           xaxis: { gridcolor: 'rgba(255, 255, 255, 0.05)', zeroline: false, showline: true, linewidth: 1.5, linecolor: '#4b5563' },
           yaxis:{ categoryorder:'array', categoryarray: prodNames, autorange:'reversed', gridcolor: 'rgba(255, 255, 255, 0.05)', showline: true, linewidth: 1.5, linecolor: '#4b5563' }
         });
-        Plotly.newPlot('top_products', [{ x: prodRev, y: prodNames, type: 'bar', orientation: 'h', name: 'Revenue', marker:{color:'#10b981'}, text: prodRev.map(v => '$' + Number(v || 0).toLocaleString()), textposition: 'outside', textfont: {color: '#9ca3af', size: 10} }], prodLayout);
+        Plotly.newPlot('top_products', [{ 
+          x: prodRev,
+          y: prodNames,
+          type: 'bar',
+          orientation: 'h',
+          name: 'Revenue',
+          marker:{color:'#10b981'},
+          customdata: prodPct.map(v => `${Number(v || 0).toFixed(2)}%`),
+          text: prodRev.map((v, i) => `$${Number(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}<br>(${Number(prodPct[i] || 0).toFixed(2)}%)`),
+          textposition: 'outside',
+          textfont: {color: '#9ca3af', size: 10},
+          hovertemplate: '%{y}<br>Revenue: $%{x:,.0f}<br>Share: %{customdata}<extra></extra>'
+        }], prodLayout);
 
         // Revenue by segment & channel (grouped bar)
         const segChannels = {};

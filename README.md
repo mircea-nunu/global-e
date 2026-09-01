@@ -36,7 +36,7 @@ See [Data Model Documentation](docs/DATA_MODEL.md) for the complete schema speci
 
 ---
 
-## Question A: Slowly Changing Dimension Strategy
+##   Q-A: CUST-1042 'Sarah Mitchell' appears in 3 orders. Look carefully at her data across those orders — something changes. How would you handle this in your model, and what are the trade-offs of your approach?
 
 ### Q-A: How would you handle slowly changing dimensions in this model?
 
@@ -222,6 +222,10 @@ python scripts/run_queries.py
 - `site/index.html` — Interactive dashboard (served locally or via GitHub Pages)
 
 4. **View Dashboard:**
+Online (GitHub)
+# Open https://mircea-nunu.github.io/global-e/
+
+Local
 ```bash
 python -m http.server 8000 --directory site
 # Open http://localhost:8000 in browser
