@@ -36,6 +36,87 @@ See [Data Model Documentation](docs/DATA_MODEL.md) for the complete schema speci
 
 ---
 
+## dbt-style model for fact_sales
+
+If this were implemented in dbt, the equivalent model would keep the same grain as the SQLite fact table: one row per order line item.
+
+```sql
+with source as (
+
+    select
+        order_id,
+        customer_id,
+        product_id,
+        order_date_key,
+        quantity,
+        unit_price_local,
+        line_revenue_usd,
+        shipping_cost_usd,
+        status,
+        channel
+    from {{ source('raw', 'fact_sales') }}
+
+),
+
+final as (
+
+    select
+        {{ dbt_utils.generate_surrogate_key([
+            'order_id',
+            'product_id',
+            'customer_id',
+            'order_date_key'
+        ]) }} as fact_sales_id,
+
+        order_id,
+        customer_id,
+        product_id,
+        order_date_key,
+
+        quantity,
+        unit_price_local,
+        line_revenue_usd,
+        shipping_cost_usd,
+
+        status,
+        channel,
+
+        line_revenue_usd + shipping_cost_usd as total_order_line_value_usd
+
+    from source
+)
+
+select *
+from final
+```
+
+### Why this is the right grain
+- Each fact row represents a single product line within an order.
+- This preserves transactional detail for revenue, quantity, and channel analysis.
+- Aggregations such as monthly revenue, product revenue, or segment/channel totals can be built cleanly in downstream marts and BI layers.
+
+### Equivalent SQL version
+```sql
+SELECT
+    ROW_NUMBER() OVER (
+        ORDER BY order_id, product_id, customer_id, order_date_key
+    ) AS fact_sales_id,
+    order_id,
+    customer_id,
+    product_id,
+    order_date_key,
+    quantity,
+    unit_price_local,
+    line_revenue_usd,
+    shipping_cost_usd,
+    status,
+    channel,
+    line_revenue_usd + shipping_cost_usd AS total_order_line_value_usd
+FROM fact_sales;
+```
+
+---
+
 ##   Q-A: CUST-1042 'Sarah Mitchell' appears in 3 orders. Look carefully at her data across those orders — something changes. How would you handle this in your model, and what are the trade-offs of your approach?
 
 ### Q-A: How would you handle slowly changing dimensions in this model?
