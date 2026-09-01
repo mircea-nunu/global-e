@@ -24,8 +24,8 @@ jobs:
 
       - name: Prepare site export assets
         run: |
-          mkdir -p site/exports
-          cp -f exports/*.csv site/exports/
+          mkdir -p assignment_submission/site/exports
+          cp -f exports/*.csv assignment_submission/site/exports/
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
@@ -33,7 +33,7 @@ jobs:
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: assignment_submission/site
 
   deploy:
     needs: build
