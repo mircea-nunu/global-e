@@ -17,12 +17,12 @@ jobs:
 
       - name: Copy exports into the site folder
         run: |
-          mkdir -p assignment_submission/site/exports
-          cp -f exports/*.csv assignment_submission/site/exports/
+          mkdir -p site/exports
+          cp -f exports/*.csv site/exports/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./assignment_submission/site
+          publish_dir: ./site
           publish_branch: gh-pages
