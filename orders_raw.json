@@ -1,0 +1,161 @@
+{
+  "export_metadata": {
+    "source_system": "RetailPro ERP",
+    "export_date": "2024-12-31",
+    "record_count": 12
+  },
+  "orders": [
+    {
+      "order_id": "ORD-2024-001",
+      "order_date": "2024-01-05T09:14:22Z",
+      "status": "Delivered",
+      "channel": "Online",
+      "customer": { "customer_id": "CUST-1042", "full_name": "Sarah Mitchell", "segment": "Premium", "region": "North", "city": "New York", "country": "US" },
+      "sales_rep": { "rep_id": "REP-07", "name": "James Holt" },
+      "line_items": [
+        { "product_id": "PROD-501", "product_name": "Wireless Headphones Pro", "category": "Electronics", "quantity": 2, "unit_price": 149.99, "discount_pct": 10 },
+        { "product_id": "PROD-318", "product_name": "USB-C Charging Hub",      "category": "Electronics", "quantity": 1, "unit_price": 49.99,  "discount_pct": 0  }
+      ],
+      "shipping_cost": 9.99, "currency": "USD", "payment_method": "Credit Card"
+    },
+    {
+      "order_id": "ORD-2024-002",
+      "order_date": "2024-01-08T14:30:00Z",
+      "status": "Delivered",
+      "channel": "In-Store",
+      "customer": { "customer_id": "CUST-2187", "full_name": "Daniel Rosenthal", "segment": "Business", "region": "South", "city": "Miami", "country": "US" },
+      "sales_rep": { "rep_id": "REP-12", "name": "Lisa Chen" },
+      "line_items": [
+        { "product_id": "PROD-102", "product_name": "Office Chair Ergonomic", "category": "Furniture", "quantity": 4, "unit_price": 299.99, "discount_pct": 15 }
+      ],
+      "shipping_cost": 0, "currency": "USD", "payment_method": "Bank Transfer"
+    },
+    {
+      "order_id": "ORD-2024-003",
+      "order_date": "2024-02-12T11:05:44Z",
+      "status": "Returned",
+      "channel": "Online",
+      "customer": { "customer_id": "CUST-0893", "full_name": "Priya Nair", "segment": "Standard", "region": "West", "city": "San Francisco", "country": "US" },
+      "sales_rep": { "rep_id": "REP-07", "name": "James Holt" },
+      "line_items": [
+        { "product_id": "PROD-207", "product_name": "Yoga Mat Premium",     "category": "Sports & Fitness", "quantity": 1, "unit_price": 59.99, "discount_pct": 5 },
+        { "product_id": "PROD-214", "product_name": "Resistance Bands Set", "category": "Sports & Fitness", "quantity": 2, "unit_price": 24.99, "discount_pct": 5 }
+      ],
+      "shipping_cost": 4.99, "currency": "USD", "payment_method": "PayPal"
+    },
+    {
+      "order_id": "ORD-2024-004",
+      "order_date": "2024-02-20T16:45:10Z",
+      "status": "Delivered",
+      "channel": "Online",
+      "customer": { "customer_id": "CUST-1042", "full_name": "Sarah Mitchell", "segment": "Premium", "region": "North", "city": "New York", "country": "US" },
+      "sales_rep": { "rep_id": "REP-07", "name": "James Holt" },
+      "line_items": [
+        { "product_id": "PROD-620", "product_name": "Smart Watch Series 5", "category": "Electronics", "quantity": 1, "unit_price": 399.99, "discount_pct": 0 }
+      ],
+      "shipping_cost": 9.99, "currency": "USD", "payment_method": "Credit Card"
+    },
+    {
+      "order_id": "ORD-2024-005",
+      "order_date": "2024-03-03T08:20:00Z",
+      "status": "Delivered",
+      "channel": "Partner",
+      "customer": { "customer_id": "CUST-3301", "full_name": "Marco Ferrari", "segment": "Business", "region": "International", "city": "Rome", "country": "IT" },
+      "sales_rep": { "rep_id": "REP-21", "name": "Anna Kowalski" },
+      "line_items": [
+        { "product_id": "PROD-501", "product_name": "Wireless Headphones Pro", "category": "Electronics", "quantity": 10, "unit_price": 149.99, "discount_pct": 20 },
+        { "product_id": "PROD-620", "product_name": "Smart Watch Series 5",   "category": "Electronics", "quantity": 5,  "unit_price": 399.99, "discount_pct": 25 }
+      ],
+      "shipping_cost": 49.99, "currency": "EUR", "payment_method": "Wire Transfer"
+    },
+    {
+      "order_id": "ORD-2024-006",
+      "order_date": "2024-03-14T10:00:00Z",
+      "status": "Delivered",
+      "channel": "Online",
+      "customer": { "customer_id": "CUST-4455", "full_name": "Rachel Green", "segment": "Standard", "region": "East", "city": "Boston", "country": "US" },
+      "sales_rep": { "rep_id": "REP-07", "name": "James Holt" },
+      "line_items": [
+        { "product_id": "PROD-415", "product_name": "Coffee Maker Deluxe", "category": "Home Appliances", "quantity": 1, "unit_price": 89.99, "discount_pct": 0  },
+        { "product_id": "PROD-416", "product_name": "Coffee Grinder Pro",   "category": "home appliances", "quantity": 1, "unit_price": 44.99, "discount_pct": 10 }
+      ],
+      "shipping_cost": 4.99, "currency": "USD", "payment_method": "Credit Card"
+    },
+    {
+      "order_id": "ORD-2024-007",
+      "order_date": "2024-04-01T15:33:00Z",
+      "status": "Cancelled",
+      "channel": "Online",
+      "customer": { "customer_id": "CUST-5512", "full_name": "Tom Bradley", "segment": "Standard", "region": "West", "city": "Phoenix", "country": "US" },
+      "sales_rep": { "rep_id": "REP-07", "name": "James Holt" },
+      "line_items": [
+        { "product_id": "PROD-102", "product_name": "Office Chair Ergonomic", "category": "Furniture", "quantity": 2, "unit_price": 299.99, "discount_pct": 0 }
+      ],
+      "shipping_cost": 0, "currency": "USD", "payment_method": "Credit Card"
+    },
+    {
+      "order_id": "ORD-2024-008",
+      "order_date": "2024-04-18T09:00:00Z",
+      "status": "Delivered",
+      "channel": "In-Store",
+      "customer": { "customer_id": "CUST-6671", "full_name": "Nina Patel", "segment": "Business", "region": "South", "city": "Houston", "country": "US" },
+      "sales_rep": { "rep_id": "REP-12", "name": "Lisa Chen" },
+      "line_items": [
+        { "product_id": "PROD-102", "product_name": "Office Chair Ergonomic", "category": "Furniture",    "quantity": 6, "unit_price": 299.99, "discount_pct": 20 },
+        { "product_id": "PROD-318", "product_name": "USB-C Charging Hub",     "category": "Electronics", "quantity": 6, "unit_price": 49.99,  "discount_pct": 10 }
+      ],
+      "shipping_cost": 0, "currency": "USD", "payment_method": "Purchase Order"
+    },
+    {
+      "order_id": "ORD-2024-009",
+      "order_date": "2024-05-22T13:15:00Z",
+      "status": "Delivered",
+      "channel": "Online",
+      "customer": { "customer_id": "CUST-7780", "full_name": "Lena Hoffmann", "segment": "Premium", "region": "International", "city": "Berlin", "country": "DE" },
+      "sales_rep": { "rep_id": "REP-21", "name": "Anna Kowalski" },
+      "line_items": [
+        { "product_id": "PROD-620", "product_name": "Smart Watch Series 5", "category": "Electronics",    "quantity": 2, "unit_price": 399.99, "discount_pct": 5 },
+        { "product_id": "PROD-207", "product_name": "Yoga Mat Premium",     "category": "Sports",         "quantity": 2, "unit_price": 149.99, "discount_pct": 5 }
+      ],
+      "shipping_cost": 19.99, "currency": "EUR", "payment_method": "Credit Card"
+    },
+    {
+      "order_id": "ORD-2024-010",
+      "order_date": "2024-07-09T11:45:00Z",
+      "status": "Delivered",
+      "channel": "Partner",
+      "customer": { "customer_id": "CUST-2187", "full_name": "Daniel Rosenthal", "segment": "Business", "region": "South", "city": "Miami", "country": "US" },
+      "sales_rep": { "rep_id": "REP-12", "name": "Lisa Chen" },
+      "line_items": [
+        { "product_id": "PROD-102", "product_name": "Office Chair Ergonomic", "category": "Furniture", "quantity": 10, "unit_price": 299.99, "discount_pct": 25 }
+      ],
+      "shipping_cost": 0, "currency": "USD", "payment_method": "Bank Transfer"
+    },
+    {
+      "order_id": "ORD-2024-011",
+      "order_date": "2024-09-30T17:00:00Z",
+      "status": "Processing",
+      "channel": "Online",
+      "customer": { "customer_id": "CUST-8891", "full_name": "Carlos Vega", "segment": "Standard", "region": "West", "city": "Los Angeles", "country": "US" },
+      "sales_rep": { "rep_id": "REP-07", "name": "James Holt" },
+      "line_items": [
+        { "product_id": "PROD-207", "product_name": "Yoga Mat Premium",    "category": "Sports",          "quantity": 1, "unit_price": 59.99, "discount_pct": 0 },
+        { "product_id": "PROD-415", "product_name": "Coffee Maker Deluxe", "category": "Home Appliances", "quantity": 1, "unit_price": 89.99, "discount_pct": 0 }
+      ],
+      "shipping_cost": 7.99, "currency": "USD", "payment_method": "PayPal"
+    },
+    {
+      "order_id": "ORD-2024-012",
+      "order_date": "2024-11-15T08:55:00Z",
+      "status": "Delivered",
+      "channel": "In-Store",
+      "customer": { "customer_id": "CUST-1042", "full_name": "Sarah Mitchell", "segment": "VIP", "region": "North", "city": "New York", "country": "US" },
+      "sales_rep": { "rep_id": "REP-12", "name": "Lisa Chen" },
+      "line_items": [
+        { "product_id": "PROD-416", "product_name": "Coffee Grinder Pro",   "category": "Home Appliances", "quantity": 1, "unit_price": 44.99, "discount_pct": 0 },
+        { "product_id": "PROD-214", "product_name": "Resistance Bands Set", "category": "Sports",          "quantity": 3, "unit_price": 24.99, "discount_pct": 0 }
+      ],
+      "shipping_cost": 0, "currency": "USD", "payment_method": "Credit Card"
+    }
+  ]
+}
