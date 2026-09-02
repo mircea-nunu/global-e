@@ -56,6 +56,10 @@ erDiagram
 	}
 ```
 
+If GitHub does not render the Mermaid block in preview, use the static SVG fallback below.
+
+![Star Schema Diagram](star_schema_diagram.svg)
+
 ---
 
 ## Table Specifications
