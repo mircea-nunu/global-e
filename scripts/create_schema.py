@@ -8,6 +8,24 @@ import os
 DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'assignment.db')
 
 DDL = [
+    # Parent table: order
+    """
+    CREATE TABLE IF NOT EXISTS orders (
+        order_id TEXT PRIMARY KEY,
+        customer_id TEXT,
+        customer_full_name TEXT,
+        customer_segment TEXT,
+        customer_region TEXT,
+        customer_city TEXT,
+        customer_country TEXT,
+        order_date TEXT,
+        currency TEXT,
+        shipping_cost REAL,
+        status TEXT,
+        channel TEXT
+    );
+    """,
+
     # Dimension: date
     """
     CREATE TABLE IF NOT EXISTS dim_date (
@@ -48,16 +66,21 @@ DDL = [
     """
     CREATE TABLE IF NOT EXISTS fact_sales (
         fact_sales_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        order_id TEXT,
+        order_id TEXT NOT NULL,
         customer_id TEXT,
         product_id TEXT,
         order_date_key TEXT,
         quantity INTEGER,
         unit_price_local REAL,
+        discount_pct REAL DEFAULT 0,
+        line_revenue_local REAL,
+        currency TEXT,
+        exchange_rate_usd REAL,
         line_revenue_usd REAL,
         shipping_cost_usd REAL,
         status TEXT,
-        channel TEXT
+        channel TEXT,
+        FOREIGN KEY (order_id) REFERENCES orders(order_id)
     );
     """,
 ]

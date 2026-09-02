@@ -31,11 +31,10 @@ def normalize_orders(raw_orders):
 
     for o in raw_orders:
         order_id = o.get('order_id') or o.get('id')
-        currency = o.get('currency', 'USD')
-        shipping = o.get('shipping_cost', 0.0)
+        currency = str(o.get('currency', 'USD') or 'USD').upper()
+        shipping = float(o.get('shipping_cost', 0.0) or 0.0)
         order_date = o.get('order_date') or o.get('created_at')
 
-        # extract customer nested info if present
         cust = o.get('customer') or {}
         orders_rows.append({
             'order_id': order_id,
@@ -52,21 +51,21 @@ def normalize_orders(raw_orders):
             'channel': o.get('channel')
         })
 
-        # support multiple common keys for line items
         for li in o.get('lines', []) or o.get('order_lines', []) or o.get('line_items', []):
             product_id = li.get('product_id')
-            qty = li.get('quantity', 1)
-            unit_price = li.get('unit_price', li.get('unit_price_local', 0.0))
+            qty = float(li.get('quantity', 1) or 1)
+            unit_price = float(li.get('unit_price', li.get('unit_price_local', 0.0)) or 0.0)
+            discount_pct = float(li.get('discount_pct', 0.0) or 0.0)
 
-            # currency conversion to USD
+            line_revenue_local = qty * unit_price * (1 - (discount_pct / 100.0))
             if currency == 'EUR':
-                unit_price_usd = float(unit_price) * RATE_EUR_USD
-                shipping_usd = float(shipping) * RATE_EUR_USD
+                exchange_rate_usd = RATE_EUR_USD
+                line_revenue_usd = line_revenue_local * exchange_rate_usd
             else:
-                unit_price_usd = float(unit_price)
-                shipping_usd = float(shipping)
+                exchange_rate_usd = 1.0
+                line_revenue_usd = line_revenue_local
 
-            line_revenue_usd = qty * unit_price_usd
+            shipping_usd = float(shipping) * exchange_rate_usd if currency == 'EUR' else float(shipping)
 
             lines_rows.append({
                 'order_id': order_id,
@@ -75,12 +74,14 @@ def normalize_orders(raw_orders):
                 'category': li.get('category'),
                 'quantity': qty,
                 'unit_price_local': unit_price,
-                'unit_price_usd': unit_price_usd,
+                'discount_pct': discount_pct,
+                'line_revenue_local': line_revenue_local,
+                'currency': currency,
+                'exchange_rate_usd': exchange_rate_usd,
                 'line_revenue_usd': line_revenue_usd,
                 'shipping_cost_usd': shipping_usd
             })
 
-            # basic quality checks
             if isinstance(li.get('category'), str) and li.get('category') != li.get('category').title():
                 dq_issues.append(f"Category casing drift product {product_id} in order {order_id}")
             if li.get('product_id') and li.get('unit_price') is None:
@@ -91,25 +92,55 @@ def normalize_orders(raw_orders):
     return orders_df, lines_df, dq_issues
 
 
+def ensure_schema(conn):
+    cur = conn.cursor()
+
+    cur.execute("CREATE TABLE IF NOT EXISTS orders (order_id TEXT PRIMARY KEY, customer_id TEXT, customer_full_name TEXT, customer_segment TEXT, customer_region TEXT, customer_city TEXT, customer_country TEXT, order_date TEXT, currency TEXT, shipping_cost REAL, status TEXT, channel TEXT)")
+
+    columns = {row[1]: row[2] for row in cur.execute("PRAGMA table_info(fact_sales)").fetchall()}
+    required_columns = {
+        'discount_pct': 'REAL',
+        'line_revenue_local': 'REAL',
+        'currency': 'TEXT',
+        'exchange_rate_usd': 'REAL',
+    }
+    for col_name, col_type in required_columns.items():
+        if col_name not in columns:
+            cur.execute(f"ALTER TABLE fact_sales ADD COLUMN {col_name} {col_type}")
+
+
 def write_sqlite(orders_df, lines_df):
     conn = sqlite3.connect(DB_PATH)
+    ensure_schema(conn)
+
     orders_df.to_sql('orders_staging', conn, if_exists='replace', index=False)
     lines_df.to_sql('order_lines_staging', conn, if_exists='replace', index=False)
 
-    # move into star schema fact_sales
     cur = conn.cursor()
 
-    # delete existing fact_sales rows for orders present in staging to avoid duplicates
     cur.execute("SELECT order_id FROM orders_staging")
     staging_order_ids = [r[0] for r in cur.fetchall()]
     if staging_order_ids:
-        # use a parameterized delete in chunks
         placeholders = ','.join('?' for _ in staging_order_ids)
         cur.execute(f"DELETE FROM fact_sales WHERE order_id IN ({placeholders})", staging_order_ids)
 
-    # Insert/append into fact_sales mapping basic columns
+    cur.execute("""
+    INSERT OR REPLACE INTO orders (
+        order_id, customer_id, customer_full_name, customer_segment, customer_region,
+        customer_city, customer_country, order_date, currency, shipping_cost, status, channel
+    )
+    SELECT
+        order_id, customer_id, customer_full_name, customer_segment, customer_region,
+        customer_city, customer_country, order_date, currency, shipping_cost, status, channel
+    FROM orders_staging
+    """)
+
     cur.executescript("""
-    INSERT INTO fact_sales (order_id, customer_id, product_id, order_date_key, quantity, unit_price_local, line_revenue_usd, shipping_cost_usd, status, channel)
+    INSERT INTO fact_sales (
+        order_id, customer_id, product_id, order_date_key, quantity, unit_price_local,
+        discount_pct, line_revenue_local, currency, exchange_rate_usd, line_revenue_usd,
+        shipping_cost_usd, status, channel
+    )
     SELECT
         o.order_id,
         o.customer_id,
@@ -117,6 +148,10 @@ def write_sqlite(orders_df, lines_df):
         o.order_date,
         l.quantity,
         l.unit_price_local,
+        l.discount_pct,
+        l.line_revenue_local,
+        l.currency,
+        l.exchange_rate_usd,
         l.line_revenue_usd,
         l.shipping_cost_usd,
         o.status,

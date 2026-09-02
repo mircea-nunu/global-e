@@ -33,8 +33,31 @@ def create_dim_product(conn):
         df = pd.read_sql('SELECT DISTINCT product_id FROM fact_sales', conn)
         df['product_name'] = None
         df['category'] = None
-    df['category'] = df['category'].astype(str).str.title()
-    df.to_sql('dim_product', conn, if_exists='replace', index=False)
+
+    # Normalize product category values so case-only drift doesn't create duplicate rows.
+    df['category'] = df['category'].fillna('Unknown').astype(str).str.strip().str.title()
+    df['product_name'] = df['product_name'].fillna(df['product_id'])
+
+    # Detect products with conflicting category values and log them as data quality issues.
+    dup_categories = (
+        df.groupby('product_id', as_index=False)
+          .agg(category_variants=('category', lambda s: sorted(s.unique().tolist())))
+    )
+    dup_categories = dup_categories[dup_categories['category_variants'].map(len) > 1]
+    if not dup_categories.empty:
+        for _, row in dup_categories.iterrows():
+            print(f"Data quality issue: product {row['product_id']} has multiple categories -> {row['category_variants']}")
+
+    # Choose a canonical category per product_id so dim_product stays unique by business key.
+    canonical = (
+        df.groupby('product_id', as_index=False)
+          .agg(
+              product_name=('product_name', lambda s: s.dropna().iloc[0] if s.notna().any() else None),
+              category=('category', lambda s: s.mode().iloc[0] if len(s.mode()) else 'Unknown')
+          )
+    )
+
+    canonical.to_sql('dim_product', conn, if_exists='replace', index=False)
 
 
 def build_scd_customers(conn):

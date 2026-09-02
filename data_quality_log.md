@@ -1,160 +1,62 @@
 # Data Quality Log
 
-## Overview
-This log documents data quality issues identified during the ETL pipeline and the handling decisions made. Each issue is categorized by type, impact, and resolution.
+This file records the main data quality issues identified across the ETL, dimension build, and validation steps.
 
----
+## 1) Category casing drift for product variants
 
-## Issue 1: Category Casing Inconsistency
+- Issue: Product category values were not consistently normalized.
+- Example: `PROD-416` appeared as `Electronics` in one order and `electronics` in another.
+- Impact: Can create duplicate or inconsistent category values in the product dimension and downstream rollups.
+- Handling: The ETL logs the issue and the dimension build normalizes categories with `str.strip().str.title()` before finalizing `dim_product`.
+- Status: Logged and mitigated.
 
-**ID:** DQ-001  
-**Type:** Data Consistency  
-**Severity:** Medium  
-**Affected Records:** 1 row
+## 2) Same product_id associated with multiple category labels
 
-**Description:**
-Product `PROD-416` appears in order `ORD-2024-006` with category value `"Electronics"` (proper case), while the same product in other orders has category `"electronics"` (lowercase). This inconsistency can cause dimension key collision or double-counting in aggregations.
+- Issue: The same product identifier was found under more than one category label.
+- Examples:
+  - `PROD-207` -> `['Sports', 'Sports & Fitness']`
+  - `PROD-214` -> `['Sports', 'Sports & Fitness']`
+- Impact: Duplicate product rows can appear in the dimension if not resolved before writing `dim_product`.
+- Handling: The dimension builder detects products with multiple category values and logs a warning before selecting a canonical category.
+- Status: Identified and guarded against in the dimension build logic.
 
-**Root Cause:**
-Manual data entry variation in the ERP system; category was entered with different casing at different times.
+## 3) Missing or incomplete product price data
 
-**Decision:**
-Apply uppercase normalization in the ETL pipeline. All product categories are converted to uppercase during the `build_dimensions.py` step:
+- Issue: Some line items had a missing `unit_price` or incomplete pricing metadata.
+- Impact: Revenue calculations would be inaccurate or fail if price is null.
+- Handling: The ETL logs a warning when `unit_price` is missing for a product and preserves the row for review.
+- Status: Identified and flagged.
 
-```python
-category = row['category'].upper()  # Normalize to uppercase
-```
+## 4) Duplicate line items in the same order
 
-**Impact:** ✅ Resolved  
-**Affected Queries:** Top Products by Revenue (correctly aggregates all variants of PROD-416)
+- Issue: Some order lines were repeated in the source data.
+- Example: A line item appeared twice for the same product/order combination due to accidental duplication.
+- Impact: Revenue, quantities, and product totals would be overstated if duplicates remain.
+- Handling: Duplicate rows can be deduplicated before fact insert by checking `(order_id, product_id, unit_price)` combinations.
+- Status: Documented and recommended for a deduplication rule in the ETL.
 
----
+## 5) Currency and shipping cost inconsistency
 
-## Issue 2: Missing Customer Geographic Data
+- Issue: Currency values were not always explicit or consistently normalized across order rows.
+- Impact: Revenue and shipping cost totals can be misinterpreted if not converted consistently to USD.
+- Handling: The ETL normalizes currency to uppercase and applies the fixed EUR-to-USD rate of `1.08` where required, while storing the conversion metadata.
+- Status: Identified and converted to a consistent USD model.
 
-**ID:** DQ-002  
-**Type:** Completeness  
-**Severity:** Low  
-**Affected Records:** 3 orders (customers CUST-007, CUST-009, CUST-011)
+## 6) Discount handling needs explicit validation
 
-**Description:**
-Three customer records have missing values in the `city` or `country` fields. Orders from these customers can still be processed, but enrichment queries for geographic analysis will show NULL values.
+- Issue: Discount percentages are not always consistently present or standardized across raw order lines.
+- Impact: Without explicit handling, line revenue may be overstated or understated.
+- Handling: The ETL includes `discount_pct` in the fact model and calculates `line_revenue_local = quantity * unit_price * (1 - discount_pct / 100)` before conversion to USD.
+- Status: Included in the fact design and validation flow.
 
-**Root Cause:**
-Customer master data was incomplete at time of order; ERP allowed NULL geo fields for certain customer types (e.g., PO-only accounts).
+## Summary
 
-**Decision:**
-Allow NULL values in `dim_customer` for missing geo data. In reporting, use `COALESCE(region, 'Unknown')` for display purposes. Do not attempt imputation, as geo data is business-critical and imputation could lead to misleading regional reports.
+The main issues identified are:
+- inconsistent category casing
+- multiple categories for the same product id
+- missing prices
+- duplicate lines
+- currency normalization issues
+- discount handling inconsistency
 
-**Implementation:**
-```sql
--- In run_queries.py:
-COALESCE(d.segment, 'Unknown') as segment,
--- NULL values preserved for geo fields to flag data quality issues
-```
-
-**Impact:** ✅ Acknowledged  
-**Affected Queries:** Revenue by Segment & Channel (geo filtering will exclude 3 rows if applied)
-
----
-
-## Issue 3: Duplicate Line Items
-
-**ID:** DQ-003  
-**Type:** Uniqueness  
-**Severity:** Medium  
-**Affected Records:** 1 duplicate (order ORD-2024-008)
-
-**Description:**
-Order `ORD-2024-008` contains two identical line items:
-- Line 1: PROD-203, Qty 2, Unit Price $49.99
-- Line 2: PROD-203, Qty 2, Unit Price $49.99
-
-This appears to be a data entry error (accidental duplicate) rather than a legitimate repeat order.
-
-**Root Cause:**
-ERP order entry UI did not enforce uniqueness constraints on line items; user likely copy-pasted a line accidentally.
-
-**Decision:**
-Deduplicate by taking the first occurrence of each (product_id, order_id, unit_price) combination. Log the duplicate in this data quality report but do not flag as fatal error.
-
-**Implementation:**
-```python
-# In etl.py:
-order_lines = order['line_items']
-seen = set()
-unique_lines = []
-for line in order_lines:
-    key = (line['product_id'], line['quantity'], line['unit_price'])
-    if key not in seen:
-        unique_lines.append(line)
-        seen.add(key)
-# Result: 47 unique line items (1 duplicate removed)
-```
-
-**Impact:** ✅ Handled  
-**Affected Queries:** All fact-based queries (deduplication applied at ETL stage)
-
----
-
-## Issue 4: Currency Mismatch in Shipping Costs
-
-**ID:** DQ-004  
-**Type:** Data Inconsistency  
-**Severity:** Medium  
-**Affected Records:** 5 orders (ORD-2024-001, ORD-2024-003, ORD-2024-005, ORD-2024-007, ORD-2024-012)
-
-**Description:**
-Shipping costs in orders are recorded in mixed currencies (some in EUR, some in USD, some in GBP). The JSON does not explicitly indicate which currency each shipping cost is in. Without proper currency conversion, revenue aggregation will be incorrect.
-
-**Root Cause:**
-ERP system integration error; shipping data should include a currency code field but it is missing from `orders_raw.json`.
-
-**Decision:**
-Assume all shipping costs are in the order's primary currency. Apply the exchange rate used for the order (e.g., 1 EUR = 1.08 USD). This is conservative and may under-report USD revenue if some shipping was already in USD, but it ensures consistency.
-
-**Implementation:**
-```python
-# In etl.py:
-shipping_cost_usd = shipping_cost_local * exchange_rate  # e.g., EUR → USD
-```
-
-**Monitoring:** ⚠️ Recommend updating ERP export to include explicit shipping currency codes.
-
-**Impact:** ✅ Mitigated  
-**Affected Queries:** Monthly Revenue, Top Products (includes shipping as part of line_revenue_usd)
-
----
-
-## Summary Table
-
-| Issue ID | Type | Severity | Count | Resolution | Status |
-|----------|------|----------|-------|-----------|--------|
-| DQ-001 | Casing | Medium | 1 | Normalize uppercase | ✅ Resolved |
-| DQ-002 | Completeness | Low | 3 | Allow NULL, flag in reports | ✅ Acknowledged |
-| DQ-003 | Uniqueness | Medium | 1 | Deduplicate | ✅ Handled |
-| DQ-004 | Currency | Medium | 5 | Currency conversion | ✅ Mitigated |
-
----
-
-## Recommendations for Future Improvements
-
-1. **Schema Enforcement:** Add NOT NULL constraints to critical fields (product_id, order_date, customer_id) at the database level.
-2. **Validation Rules:** Implement pre-load validation in ETL (e.g., enforce uppercase categories, validate currency codes).
-3. **ERP Export:** Request updated JSON schema from ERP that includes:
-   - Explicit `currency_code` field for each monetary value
-   - `is_duplicate` flag for obvious duplicates
-   - `data_quality_flags` array from ERP system
-4. **Monitoring:** Add data quality checks to CI/CD pipeline to catch issues on each run:
-   ```python
-   if len(unique_lines) != len(all_lines):
-       print(f"⚠️ {len(all_lines) - len(unique_lines)} duplicates detected")
-   ```
-
----
-
-## Related Files
-
-- ETL Script: `scripts/etl.py`
-- Dimension Build: `scripts/build_dimensions.py`
-- Query Exports: `scripts/run_queries.py`
+These issues are now tracked in the ETL and dimension-building steps to prevent silent data-quality drift in the warehouse layer.
