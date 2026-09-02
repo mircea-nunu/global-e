@@ -304,6 +304,9 @@ python -m http.server 8000 --directory site
 Open http://localhost:8000 in a browser.
 
 5. **View the published site:**
+Online (GitHub)
+# Open https://mircea-nunu.github.io/global-e/
+
 The GitHub Actions workflow copies `exports/*.csv` into `site/exports/` and publishes `site/` to GitHub Pages. If you fork this repository, update the remote CSV URL in `site/index.html` to match your GitHub Pages repository.
 
 ---
