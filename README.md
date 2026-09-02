@@ -178,7 +178,7 @@ WHERE effective_date <= '2024-06-30' AND (expiration_date IS NULL OR expiration_
 
 ---
 
-## Question B: Incremental Load Strategy
+## Question B: If this JSON file were delivered daily with new orders appended, how would you change your pipeline to load only new records?
 
 ### Q-B: How would you design an incremental load for this pipeline?
 
