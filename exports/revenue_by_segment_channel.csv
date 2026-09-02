@@ -1,8 +1,8 @@
 customer_segment,channel,revenue_usd
-Business,In-Store,3299.84
-Business,Partner,6779.738000000001
+Business,In-Store,2729.864
+Business,Partner,5165.7981
 Premium,In-Store,119.96000000000001
-Premium,Online,1937.9168
-Standard,Online,994.9100000000001
+Premium,Online,1848.5209600000003
+Standard,Online,984.9125
 VIP,In-Store,119.96000000000001
-VIP,Online,749.96
+VIP,Online,719.962
