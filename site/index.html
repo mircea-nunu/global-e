@@ -189,12 +189,20 @@
         margin: 0;
       }
 
+      .panel-meta {
+        margin: -4px 0 10px;
+        color: var(--muted);
+        font-size: 0.74rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
       .panel.full {
         margin-top: 16px;
       }
 
       .panel h2 {
-        margin: 0 0 10px;
+        margin: 0 0 4px;
         font-size: 0.95rem;
         font-weight: 600;
         color: #ffffff;
@@ -247,10 +255,12 @@
       <div class="chart-grid">
         <div class="panel">
           <h2>Monthly Revenue</h2>
+          <div id="monthly_total" class="panel-meta">Total Revenue: —</div>
           <div id="monthly" class="chart"></div>
         </div>
         <div class="panel">
           <h2>Top Products by Revenue</h2>
+          <div id="top_total" class="panel-meta">Total Revenue: —</div>
           <div id="top_products" class="chart"></div>
         </div>
       </div>
@@ -258,10 +268,12 @@
       <div class="chart-grid" style="margin-top: 22px;">
         <div class="panel">
           <h2>Revenue by Segment and Channel</h2>
+          <div id="segment_total" class="panel-meta">Total Revenue: —</div>
           <div id="segment_channel" class="chart"></div>
         </div>
         <div class="panel">
           <h2>Top Customers by Revenue</h2>
+          <div id="customer_total" class="panel-meta">Total Revenue: —</div>
           <div id="customers" class="chart"></div>
         </div>
       </div>
@@ -323,7 +335,8 @@
           return map;
         }, {});
         const bestSegment = Object.entries(segmentTotal).sort((a, b) => b[1] - a[1])[0];
-        const bestCustomer = customers.reduce((best, curr) => {
+        const validCustomers = customers.filter(r => ((r.customer_id !== null && r.customer_id !== undefined && r.customer_id !== '') || (r.full_name !== null && r.full_name !== undefined && r.full_name !== '')) && (Number(r.total_revenue_usd || r.total_revenue || r.totalRevenue || 0) > 0 || Number(r.order_count || 0) > 0));
+        const bestCustomer = validCustomers.reduce((best, curr) => {
           const value = Number(curr.total_revenue_usd || curr.total_revenue || curr.totalRevenue || 0);
           if (!best || value > Number(best.total_revenue_usd || best.total_revenue || best.totalRevenue || 0)) return curr;
           return best;
@@ -333,6 +346,10 @@
         document.getElementById('kpiProduct').textContent = topProduct ? (topProduct.product_name || topProduct.product_id) : '—';
         document.getElementById('kpiSegment').textContent = bestSegment ? bestSegment[0] : '—';
         document.getElementById('kpiCustomer').textContent = bestCustomer ? (bestCustomer.full_name || bestCustomer.customer_id) : '—';
+        document.getElementById('monthly_total').textContent = 'Total Revenue: ' + formatMoney(revenueTotal);
+        document.getElementById('top_total').textContent = 'Total Revenue: ' + formatMoney(top.reduce((sum, row) => sum + Number(row.revenue || row.revenue_usd || 0), 0));
+        document.getElementById('segment_total').textContent = 'Total Revenue: ' + formatMoney(Object.values(segmentTotal).reduce((sum, v) => sum + Number(v || 0), 0));
+        document.getElementById('customer_total').textContent = 'Total Revenue: ' + formatMoney(validCustomers.reduce((sum, row) => sum + Number(row.total_revenue_usd || row.total_revenue || row.totalRevenue || 0), 0));
 
         // Dark theme layout
         const darkLayout = {
@@ -407,17 +424,32 @@
         Plotly.newPlot('segment_channel', traces, segLayout);
 
         // Customer rank
-        const customersSorted = [...customers].sort((a, b) => Number(b.total_revenue_usd || b.total_revenue || b.totalRevenue || 0) - Number(a.total_revenue_usd || a.total_revenue || a.totalRevenue || 0));
-        const custNames = customersSorted.map(r => r.full_name || r.customer_id);
-        const custRev = customersSorted.map(r => r.total_revenue_usd || r.total_revenue || r.totalRevenue);
+        const customersSorted = [...customers]
+          .filter(r => ((r.customer_id !== null && r.customer_id !== undefined && r.customer_id !== '') || (r.full_name !== null && r.full_name !== undefined && r.full_name !== '')) && (Number(r.total_revenue_usd || r.total_revenue || r.totalRevenue || 0) > 0 || Number(r.order_count || 0) > 0))
+          .sort((a, b) => Number(b.total_revenue_usd || b.total_revenue || b.totalRevenue || 0) - Number(a.total_revenue_usd || a.total_revenue || a.totalRevenue || 0));
+        const custNames = customersSorted.map(r => `#${r.revenue_rank || 1} ${r.full_name || r.customer_id}`);
+        const custRev = customersSorted.map(r => Number(r.total_revenue_usd || r.total_revenue || r.totalRevenue || 0));
+        const custOrderCounts = customersSorted.map(r => Number(r.order_count || 0));
         const custLayout = Object.assign({}, darkLayout, {
           title: 'Top Customers by Revenue $',
-          margin:{l:200, r:60, t:35, b:40},
+          margin:{l:220, r:60, t:35, b:40},
           showlegend: false,
           xaxis: { gridcolor: 'rgba(255, 255, 255, 0.05)', zeroline: false, showline: true, linewidth: 1.5, linecolor: '#4b5563' },
           yaxis:{ categoryorder:'array', categoryarray: custNames, autorange:'reversed', gridcolor: 'rgba(255, 255, 255, 0.05)', showline: true, linewidth: 1.5, linecolor: '#4b5563' }
         });
-        Plotly.newPlot('customers', [{ x: custRev, y: custNames, type: 'bar', orientation: 'h', name: 'Revenue', marker:{color:'#f59e0b'}, text: custRev.map(v => '$' + Number(v || 0).toLocaleString()), textposition: 'outside', textfont: {color: '#9ca3af', size: 10} }], custLayout);
+        Plotly.newPlot('customers', [{ 
+          x: custRev,
+          y: custNames,
+          type: 'bar',
+          orientation: 'h',
+          name: 'Revenue',
+          marker:{color:'#f59e0b'},
+          text: custRev.map((v, i) => `$${Number(v || 0).toLocaleString()}<br>(${custOrderCounts[i]} orders)`),
+          textposition: 'outside',
+          textfont: {color: '#9ca3af', size: 10},
+          hovertemplate: '%{y}<br>Revenue: $%{x:,.0f}<br>Orders: %{customdata}<extra></extra>',
+          customdata: custOrderCounts
+        }], custLayout);
       }
 
       draw().catch(e=>{ document.body.insertAdjacentHTML('beforeend', '<p style="color:red">Error loading charts: '+e+'</p>'); console.error(e); });
