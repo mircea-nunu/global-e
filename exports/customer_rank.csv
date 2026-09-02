@@ -1,10 +1,7 @@
-customer_id,full_name,order_count,total_revenue_usd,revenue_rank
+customer_id,full_name,order_count,total_revenue,revenue_rank
 CUST-2187,Daniel Rosenthal,2,3269.891,1
 CUST-3301,Marco Ferrari,1,2915.8731000000002,2
 CUST-6671,Nina Patel,1,1709.8980000000001,3
-CUST-1042,Sarah Mitchell,3,1679.8440000000003,4
-CUST-7780,Lena Hoffmann,1,1128.55896,5
-CUST-5512,Tom Bradley,1,599.98,6
-CUST-8891,Carlos Vega,1,149.98,7
-CUST-4455,Rachel Green,1,130.481,8
-CUST-0893,Priya Nair,1,104.47149999999999,9
+CUST-7780,Lena Hoffmann,1,1128.55896,4
+CUST-1042,Sarah Mitchell,3,839.922,5
+CUST-4455,Rachel Green,1,130.481,6
