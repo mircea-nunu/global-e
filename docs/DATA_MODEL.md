@@ -155,6 +155,8 @@ This allows historical queries to reproduce past fact tables and analysis.
 
 **Note:** For SCD Type 2 queries, join on `dim_customer.customer_id AND dim_customer.is_current = 1` to get the current customer attributes.
 
+**Implementation note:** `build_dimensions.py` also writes `fact_sales_enriched`, which adds a `customer_key` lookup for SCD-aware joins. The logical star schema remains centered on `fact_sales`, but the enriched table is used to make historical customer reporting easier in SQLite.
+
 ---
 
 ## Design Rationale
@@ -201,3 +203,15 @@ See `scripts/run_queries.py` for SQL implementations.
 - **Data load:** `scripts/etl.py`
 - **Queries:** `scripts/run_queries.py`
 - **Data quality:** `data_quality_log.md`
+
+---
+
+## Implementation Notes
+
+The scripts create a few helper tables in addition to the logical star schema:
+
+- `orders` is created by `scripts/create_schema.py` as a source/staging table.
+- `orders_staging` and `order_lines_staging` are temporary load tables written by `scripts/etl.py`.
+- `fact_sales_enriched` is written by `scripts/build_dimensions.py` to attach `customer_key` values for SCD Type 2 analysis.
+
+These helper tables support the pipeline, but the analytical model remains the star schema documented above.

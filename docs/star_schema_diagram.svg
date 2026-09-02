@@ -3,11 +3,11 @@
     <style>
       .box { fill: #ffffff; stroke: #1e40af; stroke-width: 2; }
       .fact-box { fill: #ffe5e5; stroke: #991b1b; stroke-width: 3; }
-      .title { font-size: 16px; font-weight: 700; color: #1e3a8a; }
-      .subtitle { font-size: 12px; color: #64748b; font-weight: 500; }
-      .field { font-size: 11px; color: #334155; }
-      .pk { font-weight: 700; color: #dc2626; }
-      .fk { font-style: italic; color: #2563eb; }
+      .title { font-size: 16px; font-weight: 700; fill: #1e3a8a; }
+      .subtitle { font-size: 12px; fill: #64748b; font-weight: 500; }
+      .field { font-size: 11px; fill: #334155; }
+      .pk { font-weight: 700; fill: #dc2626; }
+      .fk { font-style: italic; fill: #2563eb; }
       .arrow { stroke: #475569; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
       .arrow-label { font-size: 10px; fill: #64748b; font-weight: 500; }
     </style>
@@ -22,24 +22,25 @@
 
   <!-- FACT_SALES (Center) -->
   <g>
-    <rect x="400" y="200" width="400" height="280" class="fact-box" rx="8" />
+    <rect x="380" y="200" width="440" height="300" class="fact-box" rx="8" />
     <text x="600" y="230" class="title" text-anchor="middle">FACT_SALES</text>
     <text x="600" y="250" class="subtitle" text-anchor="middle">(Line-Item Grain)</text>
-    
-    <line x1="420" y1="260" x2="780" y2="260" stroke="#991b1b" stroke-width="1" />
-    
-    <text x="430" y="280" class="field"><tspan class="pk">⬤ fact_sales_id</tspan> INTEGER</text>
-    <text x="430" y="298" class="field"><tspan class="fk">→ order_id</tspan> TEXT</text>
-    <text x="430" y="316" class="field"><tspan class="fk">→ customer_id</tspan> TEXT</text>
-    <text x="430" y="334" class="field"><tspan class="fk">→ product_id</tspan> TEXT</text>
-    <text x="430" y="352" class="field"><tspan class="fk">→ order_date_key</tspan> TEXT</text>
-    
-    <text x="600" y="375" class="field" text-anchor="middle">quantity, unit_price_local</text>
-    <text x="600" y="393" class="field" text-anchor="middle">line_revenue_usd ⭐</text>
-    <text x="600" y="411" class="field" text-anchor="middle">shipping_cost_usd, status</text>
-    <text x="600" y="429" class="field" text-anchor="middle">channel</text>
-    
-    <text x="600" y="455" class="subtitle" text-anchor="middle" font-size="10">47 rows | 12 orders</text>
+
+    <line x1="400" y1="260" x2="800" y2="260" stroke="#991b1b" stroke-width="1" />
+
+    <text x="410" y="280" class="field"><tspan class="pk">⬤ fact_sales_id</tspan> INTEGER</text>
+    <text x="410" y="298" class="field"><tspan class="fk">→ order_id</tspan> TEXT</text>
+    <text x="410" y="316" class="field"><tspan class="fk">→ customer_id</tspan> TEXT</text>
+    <text x="410" y="334" class="field"><tspan class="fk">→ product_id</tspan> TEXT</text>
+    <text x="410" y="352" class="field"><tspan class="fk">→ order_date_key</tspan> TEXT</text>
+
+    <text x="600" y="375" class="field" text-anchor="middle">quantity, unit_price_local, discount_pct</text>
+    <text x="600" y="393" class="field" text-anchor="middle">currency, exchange_rate_usd</text>
+    <text x="600" y="411" class="field" text-anchor="middle">line_revenue_usd ⭐, shipping_cost_usd</text>
+    <text x="600" y="429" class="field" text-anchor="middle">status, channel</text>
+
+    <text x="600" y="455" class="subtitle" text-anchor="middle" font-size="10">Central analytical table behind all query exports</text>
+    <text x="600" y="475" class="subtitle" text-anchor="middle" font-size="10">47 rows | 12 orders</text>
   </g>
 
   <!-- DIM_DATE (Top Left) -->
@@ -47,13 +48,13 @@
     <rect x="50" y="80" width="280" height="160" class="box" rx="8" />
     <text x="190" y="110" class="title" text-anchor="middle">DIM_DATE</text>
     <text x="190" y="128" class="subtitle" text-anchor="middle">(SCD Type 1)</text>
-    
+
     <line x1="70" y1="135" x2="310" y2="135" stroke="#1e40af" stroke-width="1" />
-    
-    <text x="70" y="155" class="field"><tspan class="pk">⬤ date_key</tspan> TEXT</text>
+
+    <text x="70" y="155" class="field"><tspan class="pk">⬭ date_key</tspan> TEXT</text>
     <text x="70" y="173" class="field">full_date, month</text>
     <text x="70" y="191" class="field">quarter, year</text>
-    
+
     <text x="190" y="220" class="subtitle" text-anchor="middle" font-size="10">Enables temporal grouping</text>
   </g>
 
@@ -62,54 +63,54 @@
     <rect x="870" y="80" width="280" height="160" class="box" rx="8" />
     <text x="1010" y="110" class="title" text-anchor="middle">DIM_PRODUCT</text>
     <text x="1010" y="128" class="subtitle" text-anchor="middle">(SCD Type 1)</text>
-    
+
     <line x1="890" y1="135" x2="1130" y2="135" stroke="#1e40af" stroke-width="1" />
-    
+
     <text x="890" y="155" class="field"><tspan class="pk">⬭ product_id</tspan> TEXT</text>
     <text x="890" y="173" class="field">product_name</text>
     <text x="890" y="191" class="field">category</text>
-    
+
     <text x="1010" y="220" class="subtitle" text-anchor="middle" font-size="10">Supports product analysis</text>
   </g>
 
   <!-- DIM_CUSTOMER (Bottom) -->
   <g>
-    <rect x="200" y="550" width="800" height="200" class="box" rx="8" />
-    <text x="600" y="580" class="title" text-anchor="middle">DIM_CUSTOMER</text>
-    <text x="600" y="598" class="subtitle" text-anchor="middle">(SCD Type 2 — Tracks History)</text>
-    
-    <line x1="220" y1="605" x2="980" y2="605" stroke="#1e40af" stroke-width="1" />
-    
-    <text x="220" y="625" class="field"><tspan class="pk">⬭ customer_key</tspan> INTEGER (Surrogate)</text>
-    <text x="220" y="643" class="field"><tspan class="fk">→ customer_id</tspan> TEXT (Business Key)</text>
-    <text x="220" y="661" class="field">full_name, segment, region</text>
-    <text x="220" y="679" class="field">city, country</text>
-    
-    <text x="600" y="705" class="field" text-anchor="middle"><tspan class="pk">is_current</tspan> (0/1) | effective_date | expiration_date</text>
-    
-    <text x="600" y="730" class="subtitle" text-anchor="middle" font-size="10">Preserves customer attribute history for accurate historical analysis</text>
+    <rect x="200" y="570" width="800" height="200" class="box" rx="8" />
+    <text x="600" y="600" class="title" text-anchor="middle">DIM_CUSTOMER</text>
+    <text x="600" y="618" class="subtitle" text-anchor="middle">(SCD Type 2 — Tracks History)</text>
+
+    <line x1="220" y1="625" x2="980" y2="625" stroke="#1e40af" stroke-width="1" />
+
+    <text x="220" y="645" class="field"><tspan class="pk">⬭ customer_key</tspan> INTEGER (Surrogate)</text>
+    <text x="220" y="663" class="field"><tspan class="fk">→ customer_id</tspan> TEXT (Business Key)</text>
+    <text x="220" y="681" class="field">full_name, segment, region</text>
+    <text x="220" y="699" class="field">city, country</text>
+
+    <text x="600" y="725" class="field" text-anchor="middle"><tspan class="pk">is_current</tspan> (0/1) | effective_date | expiration_date</text>
+
+    <text x="600" y="750" class="subtitle" text-anchor="middle" font-size="10">Preserves customer attribute history for accurate historical analysis</text>
   </g>
 
   <!-- Arrows from FACT to DIM_DATE -->
-  <path class="arrow" d="M 500 200 L 300 240" />
-  <text x="360" y="210" class="arrow-label">order_date_key</text>
+  <path class="arrow" d="M 480 200 L 300 240" />
+  <text x="340" y="210" class="arrow-label">order_date_key</text>
 
   <!-- Arrows from FACT to DIM_PRODUCT -->
-  <path class="arrow" d="M 700 200 L 900 240" />
-  <text x="780" y="210" class="arrow-label">product_id</text>
+  <path class="arrow" d="M 720 200 L 900 240" />
+  <text x="790" y="210" class="arrow-label">product_id</text>
 
   <!-- Arrows from FACT to DIM_CUSTOMER -->
-  <path class="arrow" d="M 500 480 L 450 550" stroke-dasharray="5,5" />
-  <text x="430" y="520" class="arrow-label">customer_id</text>
-  <text x="430" y="535" class="arrow-label" font-size="9">(+ is_current=1)</text>
+  <path class="arrow" d="M 500 500 L 450 570" stroke-dasharray="5,5" />
+  <text x="430" y="540" class="arrow-label">customer_id</text>
+  <text x="430" y="555" class="arrow-label" font-size="9">(+ is_current=1)</text>
 
   <!-- Legend -->
   <g>
-    <text x="50" y="770" class="subtitle" font-size="11" font-weight="600">Legend:</text>
-    <text x="150" y="770" class="field"><tspan class="pk">⬭</tspan> = Primary Key</text>
-    <text x="350" y="770" class="field"><tspan class="fk">→</tspan> = Foreign Key</text>
-    <text x="550" y="770" class="field">⭐ = Aggregation Column</text>
-    <text x="800" y="770" class="field" font-size="9">Red Box = Fact Table</text>
-    <text x="1000" y="770" class="field" font-size="9">Blue Box = Dimension Table</text>
+    <text x="50" y="785" class="subtitle" font-size="11" font-weight="600">Legend:</text>
+    <text x="150" y="785" class="field"><tspan class="pk">⬭</tspan> = Primary Key</text>
+    <text x="350" y="785" class="field"><tspan class="fk">→</tspan> = Foreign Key</text>
+    <text x="550" y="785" class="field">⭐ = Aggregation Column</text>
+    <text x="800" y="785" class="field" font-size="9">Red Box = Fact Table</text>
+    <text x="1000" y="785" class="field" font-size="9">Blue Box = Dimension Table</text>
   </g>
 </svg>

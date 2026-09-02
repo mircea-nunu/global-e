@@ -1,12 +1,12 @@
 # Assignment — End-to-end Plan & Repo
 
-This repository contains a modular, checkpointed plan to complete the assessment within 2–3 hours.
+This repository contains the completed pipeline, analytical exports, and dashboard assets for the assessment.
 
-## Decisions taken for implementation
-- Database: SQLite 3 (`assignment.db`) — chosen for portability and local Power BI connectivity.
-- Dashboard: Interactive static site (`site/index.html`) with Plotly.js charts rendering from CSV exports — published to GitHub Pages via Actions.
-- Currency conversion: `1 EUR = 1.08 USD`. Shipping costs in EUR will be converted to USD.
-- SCD strategy: **SCD Type 2** for `dim_customer` (preserves history).
+## Implementation decisions
+- Database: SQLite 3 (`assignment.db`) for portability and simple Power BI connectivity.
+- Dashboard: Static site in `site/index.html` with Plotly.js charts driven by CSV exports and published by GitHub Pages Actions.
+- Currency conversion: `1 EUR = 1.08 USD`; shipping costs in EUR are normalized to USD.
+- SCD strategy: **SCD Type 2** for `dim_customer` to preserve customer history.
 
 ---
 
@@ -117,7 +117,7 @@ FROM fact_sales;
 
 ---
 
-##   Q-A: CUST-1042 'Sarah Mitchell' appears in 3 orders. Look carefully at her data across those orders — something changes. How would you handle this in your model, and what are the trade-offs of your approach?
+## Q-A: CUST-1042 'Sarah Mitchell' appears in 3 orders. Look carefully at her data across those orders — something changes. How would you handle this in your model, and what are the trade-offs of your approach?
 
 ### Q-A: How would you handle slowly changing dimensions in this model?
 
@@ -277,88 +277,76 @@ schedule:
 
 ## Quick Start
 
-1. **Setup environment:**
-```bash
+1. **Create and activate a virtual environment:**
+```powershell
 python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
+.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
 ```
 
-2. **Run the ETL pipeline:**
-```bash
-# Create schema
+2. **Run the pipeline in order:**
+```powershell
 python scripts/create_schema.py
-
-# Load data
 python scripts/etl.py orders_raw.json
-
-# Build dimensions and run analytics
 python scripts/build_dimensions.py
 python scripts/run_queries.py
 ```
 
-3. **Outputs:**
-- `assignment.db` — SQLite database with star-schema tables
-- `exports/*.csv` — Query results (4 analytics queries)
-- `site/index.html` — Interactive dashboard (served locally or via GitHub Pages)
-
-4. **View Dashboard:**
-Online (GitHub)
-# Open https://mircea-nunu.github.io/global-e/
-
-Local
-```bash
-python -m http.server 8000 --directory site
-# Open http://localhost:8000 in browser
+3. **Optional dashboard images:**
+```powershell
+python scripts/generate_dashboards.py
 ```
+
+4. **View the dashboard locally:**
+```powershell
+python -m http.server 8000 --directory site
+```
+Open http://localhost:8000 in a browser.
+
+5. **View the published site:**
+The GitHub Actions workflow copies `exports/*.csv` into `site/exports/` and publishes `site/` to GitHub Pages. If you fork this repository, update the remote CSV URL in `site/index.html` to match your GitHub Pages repository.
 
 ---
 
 ## Data Quality
 
 See [Data Quality Log](data_quality_log.md) for detailed findings:
-- **4 quality issues identified** during ETL
-- All issues logged with root cause and resolution strategy
-- Issues: category casing, missing geo data, duplicate lines, currency mismatches
+- **6 quality issues identified** across ETL and dimension build steps
+- All issues are logged with root cause and resolution strategy
+- Issues: category casing drift, conflicting product categories, missing price data, duplicate line items, currency/shipping normalization, discount handling
 
 ---
 
 ## Submission Structure
 
 ```
-assignment_submission/
-├── orders_raw.json                # Raw ERP export (provided, unmodified)
-├── assignment.db                  # SQLite database (created by ETL)
-├── README.md                       # This file + Q-A & Q-B answers
-├── data_quality_log.md            # 4+ data quality issues identified
-├── DEPLOY.md                       # GitHub Pages deployment guide
-├── CHAT_SESSION_FULL.md          # AI usage session transcript
-│
+.
+├── orders_raw.json                 # Raw ERP export (provided, unmodified)
+├── assignment.db                   # SQLite database created by the pipeline
+├── README.md                       # This guide plus the assignment answers
+├── data_quality_log.md             # Logged data-quality findings and handling
+├── DEPLOY.md                       # GitHub Pages deployment notes
+├── CHAT_SESSION_FULL.md            # Full transcript of the AI-assisted session
+├── CHAT_SESSION.md                 # Shorter session summary
 ├── docs/
-│   ├── DATA_MODEL.md             # Full data model specification
-│   └── star_schema_diagram.svg   # Visual ER diagram
-│
+│   ├── DATA_MODEL.md               # Schema specification and design rationale
+│   └── star_schema_diagram.svg     # Visual ER diagram
 ├── scripts/
-│   ├── create_schema.py          # Task 1: Create target tables
-│   ├── etl.py                    # Task 1: Extract & load
-│   ├── build_dimensions.py       # Build dim tables and enrich facts
-│   ├── run_queries.py            # Task 3: Execute 4 SQL analytics queries
-│   └── generate_dashboards.py    # Generate PNG mockups (optional)
-│
+│   ├── create_schema.py            # Create the SQLite schema
+│   ├── etl.py                      # Normalize and load raw orders
+│   ├── build_dimensions.py         # Build dimensions and enrich the fact table
+│   ├── run_queries.py              # Execute the 4 analytical SQL queries
+│   └── generate_dashboards.py      # Generate PNG dashboard mockups
 ├── exports/
-│   ├── monthly_revenue_delivered.csv      # Query 1: Monthly revenue
-│   ├── top_products.csv                   # Query 2: Top products
-│   ├── revenue_by_segment_channel.csv     # Query 3: Segment × Channel
-│   └── customer_rank.csv                  # Query 4: Customer ranking
-│
+│   ├── monthly_revenue.csv         # Query 1: Monthly revenue
+│   ├── top_products.csv            # Query 2: Top products
+│   ├── revenue_by_segment_channel.csv  # Query 3: Segment × channel
+│   └── customer_rank.csv           # Query 4: Customer ranking
 ├── site/
-│   ├── index.html                # Dashboard (Plotly.js + CSV loading)
-│   └── exports/                  # CSV files copied here by GitHub Actions
-│
+│   └── index.html                  # Plotly dashboard that loads the CSV exports
 ├── .github/workflows/
-│   └── deploy.yml                # GitHub Actions: build & publish to Pages
-│
-└── requirements.txt              # Python dependencies
+│   └── deploy.yml                  # GitHub Actions workflow for GitHub Pages
+└── requirements.txt                # Python dependencies
 ```
 
 ---
@@ -377,11 +365,13 @@ assignment_submission/
 - Dashboard HTML scaffold with Plotly integration
 
 **Manual Verification:**
-All AI-generated code was:
+All AI-assisted content was:
 1. **Reviewed** for correctness and business logic
 2. **Tested** against sample data (orders_raw.json)
 3. **Refined** with manual adjustments for currency conversion, SCD Type 2 logic, data quality handling
 4. **Validated** through export CSV inspection and dashboard rendering
+
+The full transcript of the AI-assisted work is stored in [CHAT_SESSION_FULL.md](CHAT_SESSION_FULL.md).
 
 **Key Decisions Made by Engineer:**
 - Choice of SQLite over cloud database (portability)
@@ -394,10 +384,10 @@ All AI-generated code was:
 
 ## Notes & Known Limitations
 
-- **Full Load Only:** Current pipeline reloads all data on each run. See Q-B for incremental load strategy.
+- **Full Reload Pipeline:** The current scripts rebuild the database and exports from the raw JSON source each run.
 - **Test Data:** Submission uses 12 sample orders (47 line items) from provided JSON.
 - **Scaling:** Schema is designed to scale to millions of rows; tested locally with SQLite 3.
-- **Dimensions:** Currently no time-based SCD Type 2 for products (could add if category changes). All dimensions use business keys for now.
+- **Dimensions:** `build_dimensions.py` writes `fact_sales_enriched` with a `customer_key` lookup for SCD Type 2 history, while `fact_sales` remains the canonical fact table.
 
 ---
 
