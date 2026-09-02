@@ -37,6 +37,9 @@ See [Data Model Documentation](docs/DATA_MODEL.md) for the complete schema speci
 **Visual Diagram:**
 ![Star Schema](docs/star_schema_diagram.svg)
 
+**Implementation Diagram:**
+![Implementation Schema](docs/implementation_schema.svg)
+
 **Key Tables:**
 - **FACT_SALES** (central fact table, line-item grain)
   - Links to dim_date, dim_product, dim_customer, and implicitly channel

@@ -10,6 +10,8 @@
       .fk { font-style: italic; fill: #2563eb; }
       .arrow { stroke: #475569; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
       .arrow-label { font-size: 10px; fill: #64748b; font-weight: 500; }
+      .card-label { font-size: 10px; font-weight: 700; fill: #0f172a; }
+      .card-bg { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1; }
     </style>
     <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
       <polygon points="0 0, 10 3, 0 6" fill="#475569" />
@@ -94,23 +96,29 @@
   <!-- Arrows from FACT to DIM_DATE -->
   <path class="arrow" d="M 480 200 L 300 240" />
   <text x="340" y="210" class="arrow-label">order_date_key</text>
+  <rect x="322" y="216" width="30" height="16" class="card-bg" rx="3" />
+  <text x="337" y="228" class="card-label" text-anchor="middle">M:1</text>
 
   <!-- Arrows from FACT to DIM_PRODUCT -->
   <path class="arrow" d="M 720 200 L 900 240" />
   <text x="790" y="210" class="arrow-label">product_id</text>
+  <rect x="777" y="216" width="30" height="16" class="card-bg" rx="3" />
+  <text x="792" y="228" class="card-label" text-anchor="middle">M:1</text>
 
   <!-- Arrows from FACT to DIM_CUSTOMER -->
   <path class="arrow" d="M 500 500 L 450 570" stroke-dasharray="5,5" />
   <text x="430" y="540" class="arrow-label">customer_id</text>
   <text x="430" y="555" class="arrow-label" font-size="9">(+ is_current=1)</text>
+  <rect x="455" y="525" width="30" height="16" class="card-bg" rx="3" />
+  <text x="470" y="537" class="card-label" text-anchor="middle">M:1</text>
 
   <!-- Legend -->
   <g>
     <text x="50" y="785" class="subtitle" font-size="11" font-weight="600">Legend:</text>
     <text x="150" y="785" class="field"><tspan class="pk">⬭</tspan> = Primary Key</text>
     <text x="350" y="785" class="field"><tspan class="fk">→</tspan> = Foreign Key</text>
-    <text x="550" y="785" class="field">⭐ = Aggregation Column</text>
-    <text x="800" y="785" class="field" font-size="9">Red Box = Fact Table</text>
-    <text x="1000" y="785" class="field" font-size="9">Blue Box = Dimension Table</text>
+    <text x="550" y="785" class="field">M:1 = many fact rows to one dimension row</text>
+    <text x="820" y="785" class="field" font-size="9">Red Box = Fact Table</text>
+    <text x="1010" y="785" class="field" font-size="9">Blue Box = Dimension Table</text>
   </g>
 </svg>

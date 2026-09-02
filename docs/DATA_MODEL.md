@@ -10,50 +10,50 @@ This assignment uses a **star schema** data model optimized for analytical queri
 
 ```mermaid
 erDiagram
-    FACT_SALES ||--o{ DIM_DATE : "order_date_key"
-    FACT_SALES ||--o{ DIM_PRODUCT : "product_id"
-    FACT_SALES ||--o{ DIM_CUSTOMER : "customer_id"
+	FACT_SALES ||--o{ DIM_DATE : "order_date_key"
+	FACT_SALES ||--o{ DIM_PRODUCT : "product_id"
+	FACT_SALES ||--o{ DIM_CUSTOMER : "customer_id"
 
-    FACT_SALES {
-        int fact_sales_id PK
-        string order_id
-        string customer_id FK
-        string product_id FK
-        string order_date_key FK
-        int quantity
-        float unit_price_local
-        float line_revenue_usd
-        float shipping_cost_usd
-        string status
-        string channel
-    }
+	FACT_SALES {
+		int fact_sales_id PK
+		string order_id
+		string customer_id FK
+		string product_id FK
+		string order_date_key FK
+		int quantity
+		float unit_price_local
+		float line_revenue_usd
+		float shipping_cost_usd
+		string status
+		string channel
+	}
 
-    DIM_DATE {
-        string date_key PK
-        string full_date
-        int month
-        int quarter
-        int year
-    }
+	DIM_DATE {
+		string date_key PK
+		string full_date
+		int month
+		int quarter
+		int year
+	}
 
-    DIM_PRODUCT {
-        string product_id PK
-        string product_name
-        string category
-    }
+	DIM_PRODUCT {
+		string product_id PK
+		string product_name
+		string category
+	}
 
-    DIM_CUSTOMER {
-        int customer_key PK
-        string customer_id FK
-        string full_name
-        string segment
-        string region
-        string city
-        string country
-        int is_current
-        string effective_date
-        string expiration_date
-    }
+	DIM_CUSTOMER {
+		int customer_key PK
+		string customer_id FK
+		string full_name
+		string segment
+		string region
+		string city
+		string country
+		int is_current
+		string effective_date
+		string expiration_date
+	}
 ```
 
 ---
@@ -203,6 +203,7 @@ See `scripts/run_queries.py` for SQL implementations.
 - **Data load:** `scripts/etl.py`
 - **Queries:** `scripts/run_queries.py`
 - **Data quality:** `data_quality_log.md`
+- **Implementation diagram:** `docs/implementation_schema.svg`
 
 ---
 

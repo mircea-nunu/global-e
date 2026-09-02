@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 920" style="background: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+  <defs>
+    <style>
+      .box { fill: #ffffff; stroke: #2563eb; stroke-width: 2; }
+      .fact-box { fill: #fee2e2; stroke: #b91c1c; stroke-width: 3; }
+      .helper-box { fill: #ecfeff; stroke: #0f766e; stroke-width: 2; stroke-dasharray: 6 4; }
+      .title { font-size: 18px; font-weight: 700; fill: #0f172a; }
+      .subtitle { font-size: 12px; fill: #64748b; font-weight: 500; }
+      .field { font-size: 11px; fill: #334155; }
+      .pk { font-weight: 700; fill: #dc2626; }
+      .fk { font-style: italic; fill: #2563eb; }
+      .arrow { stroke: #475569; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .arrow-teal { stroke: #0f766e; stroke-width: 2; fill: none; stroke-dasharray: 6 4; marker-end: url(#arrowhead-teal); }
+      .arrow-label { font-size: 10px; fill: #64748b; font-weight: 500; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#475569" />
+    </marker>
+    <marker id="arrowhead-teal" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#0f766e" />
+    </marker>
+  </defs>
+
+  <text x="750" y="36" class="title" text-anchor="middle" font-size="24">Implementation Schema — Physical Pipeline</text>
+  <text x="750" y="58" class="subtitle" text-anchor="middle">Logical star schema plus staging and helper tables used by the scripts</text>
+
+  <!-- source -->
+  <g>
+    <rect x="45" y="120" width="250" height="190" class="helper-box" rx="10" />
+    <text x="170" y="150" class="title" text-anchor="middle">orders_raw.json</text>
+    <text x="170" y="170" class="subtitle" text-anchor="middle">Raw source file</text>
+    <line x1="65" y1="182" x2="275" y2="182" stroke="#0f766e" stroke-width="1" />
+    <text x="65" y="205" class="field">12 orders</text>
+    <text x="65" y="223" class="field">nested customer info</text>
+    <text x="65" y="241" class="field">line items</text>
+    <text x="65" y="259" class="field">shipping details</text>
+  </g>
+
+  <!-- staging -->
+  <g>
+    <rect x="330" y="120" width="260" height="170" class="helper-box" rx="10" />
+    <text x="460" y="150" class="title" text-anchor="middle">orders_staging</text>
+    <text x="460" y="170" class="subtitle" text-anchor="middle">Temp load table</text>
+    <line x1="350" y1="182" x2="570" y2="182" stroke="#0f766e" stroke-width="1" />
+    <text x="350" y="205" class="field"><tspan class="pk">order_id</tspan></text>
+    <text x="350" y="223" class="field">customer_* attributes</text>
+    <text x="350" y="241" class="field">order_date, status, channel</text>
+    <text x="350" y="259" class="field">shipping_cost, currency</text>
+  </g>
+
+  <g>
+    <rect x="630" y="120" width="260" height="170" class="helper-box" rx="10" />
+    <text x="760" y="150" class="title" text-anchor="middle">order_lines_staging</text>
+    <text x="760" y="170" class="subtitle" text-anchor="middle">Temp line-item table</text>
+    <line x1="650" y1="182" x2="870" y2="182" stroke="#0f766e" stroke-width="1" />
+    <text x="650" y="205" class="field"><tspan class="pk">order_id</tspan>, <tspan class="pk">product_id</tspan></text>
+    <text x="650" y="223" class="field">quantity, unit_price</text>
+    <text x="650" y="241" class="field">discount_pct, currency</text>
+    <text x="650" y="259" class="field">line_revenue_local, line_revenue_usd</text>
+  </g>
+
+  <!-- fact -->
+  <g>
+    <rect x="500" y="340" width="500" height="310" class="fact-box" rx="12" />
+    <text x="750" y="372" class="title" text-anchor="middle">fact_sales</text>
+    <text x="750" y="390" class="subtitle" text-anchor="middle">Analytical fact table at line-item grain</text>
+    <line x1="520" y1="400" x2="980" y2="400" stroke="#b91c1c" stroke-width="1" />
+
+    <text x="530" y="424" class="field"><tspan class="pk">fact_sales_id</tspan></text>
+    <text x="530" y="442" class="field"><tspan class="fk">order_id</tspan></text>
+    <text x="530" y="460" class="field"><tspan class="fk">customer_id</tspan></text>
+    <text x="530" y="478" class="field"><tspan class="fk">product_id</tspan></text>
+    <text x="530" y="496" class="field"><tspan class="fk">order_date_key</tspan></text>
+
+    <text x="750" y="526" class="field" text-anchor="middle">quantity, unit_price_local, discount_pct</text>
+    <text x="750" y="544" class="field" text-anchor="middle">currency, exchange_rate_usd</text>
+    <text x="750" y="562" class="field" text-anchor="middle">line_revenue_local, line_revenue_usd ⭐</text>
+    <text x="750" y="580" class="field" text-anchor="middle">shipping_cost_usd, status, channel</text>
+  </g>
+
+  <!-- dimensions -->
+  <g>
+    <rect x="60" y="390" width="250" height="150" class="box" rx="10" />
+    <text x="185" y="418" class="title" text-anchor="middle">dim_date</text>
+    <text x="185" y="436" class="subtitle" text-anchor="middle">Type 1 dimension</text>
+    <line x1="80" y1="444" x2="290" y2="444" stroke="#2563eb" stroke-width="1" />
+    <text x="80" y="466" class="field"><tspan class="pk">date_key</tspan></text>
+    <text x="80" y="484" class="field">full_date, month</text>
+    <text x="80" y="502" class="field">quarter, year</text>
+  </g>
+
+  <g>
+    <rect x="1190" y="390" width="250" height="150" class="box" rx="10" />
+    <text x="1315" y="418" class="title" text-anchor="middle">dim_product</text>
+    <text x="1315" y="436" class="subtitle" text-anchor="middle">Type 1 dimension</text>
+    <line x1="1210" y1="444" x2="1420" y2="444" stroke="#2563eb" stroke-width="1" />
+    <text x="1210" y="466" class="field"><tspan class="pk">product_id</tspan></text>
+    <text x="1210" y="484" class="field">product_name</text>
+    <text x="1210" y="502" class="field">category</text>
+  </g>
+
+  <g>
+    <rect x="360" y="720" width="780" height="170" class="box" rx="10" />
+    <text x="750" y="748" class="title" text-anchor="middle">dim_customer</text>
+    <text x="750" y="766" class="subtitle" text-anchor="middle">SCD Type 2 customer dimension</text>
+    <line x1="380" y1="774" x2="1120" y2="774" stroke="#2563eb" stroke-width="1" />
+    <text x="390" y="796" class="field"><tspan class="pk">customer_key</tspan> AUTOINCREMENT</text>
+    <text x="390" y="814" class="field"><tspan class="fk">customer_id</tspan>, full_name, segment, region</text>
+    <text x="390" y="832" class="field">city, country, is_current, effective_date, expiration_date</text>
+  </g>
+
+  <!-- helper output -->
+  <g>
+    <rect x="1140" y="700" width="310" height="190" class="helper-box" rx="10" />
+    <text x="1295" y="730" class="title" text-anchor="middle">fact_sales_enriched</text>
+    <text x="1295" y="748" class="subtitle" text-anchor="middle">Helper output for SCD-aware joins</text>
+    <line x1="1160" y1="756" x2="1430" y2="756" stroke="#0f766e" stroke-width="1" />
+    <text x="1164" y="780" class="field"><tspan class="fk">customer_key</tspan> added from dim_customer</text>
+    <text x="1164" y="798" class="field">all fact_sales columns retained</text>
+    <text x="1164" y="816" class="field">used for historical customer reporting</text>
+  </g>
+
+  <!-- arrows -->
+  <path class="arrow-teal" d="M 295 210 L 330 210" />
+  <text x="300" y="196" class="arrow-label" fill="#0f766e">source parse</text>
+
+  <path class="arrow-teal" d="M 590 230 L 630 230" />
+  <text x="600" y="216" class="arrow-label" fill="#0f766e">split lines</text>
+
+  <path class="arrow" d="M 460 290 L 560 340" />
+  <text x="485" y="314" class="arrow-label">orders_staging</text>
+
+  <path class="arrow" d="M 760 290 L 740 340" />
+  <text x="770" y="314" class="arrow-label">order_lines_staging</text>
+
+  <path class="arrow" d="M 310 465 L 500 465" />
+  <text x="350" y="450" class="arrow-label">order_date_key</text>
+
+  <path class="arrow" d="M 1000 465 L 1190 465" />
+  <text x="1050" y="450" class="arrow-label">product_id</text>
+
+  <path class="arrow" d="M 750 650 L 750 720" />
+  <text x="766" y="690" class="arrow-label">customer_id + dates</text>
+
+  <path class="arrow-teal" d="M 1000 785 L 1140 785" />
+  <text x="1025" y="772" class="arrow-label" fill="#0f766e">customer_key lookup</text>
+
+  <!-- legend -->
+  <g>
+    <text x="45" y="910" class="subtitle" font-size="11" font-weight="600">Legend:</text>
+    <text x="125" y="910" class="field"><tspan class="pk">red text</tspan> = primary key</text>
+    <text x="305" y="910" class="field"><tspan class="fk">blue text</tspan> = business/foreign key</text>
+    <text x="560" y="910" class="field">blue box = analytical dimension</text>
+    <text x="800" y="910" class="field">red box = fact table</text>
+    <text x="985" y="910" class="field">teal dashed box = temp/helper table</text>
+  </g>
+</svg>
