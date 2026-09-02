@@ -1,0 +1,124 @@
+﻿
+BI Developer
+Technical Assessment
+
+
+Estimated Time
+2 – 3 hours
+
+Deliverables
+Working code/scripts + data model diagram + dashboard mockup/screenshots
+
+Submission
+Upload to Google Drive / GitHub and share the link
+
+Tools
+Your choice — Python, SQL, dbt, Spark, Power BI, Tableau, Looker, Qlik , Excel, etc.
+
+AI Usage
+Encouraged — but you must document it (see Section 4)
+
+
+1. Background
+You are given a raw JSON export from a retail company's ERP system. The file (orders_raw.json) contains 12 sales orders with nested customer info, line items, and shipping details.
+
+Your job is to engineer this data end-to-end: extract and flatten it, load it into a structured target model, and design the reporting layer that a dashboard would sit on top of.
+
+2. The Tasks
+Complete all three tasks. They build on each other.
+
+Task 1: Extract &amp; Load
+Parse orders_raw.json and extract all orders and their line items.
+Load the data into two target tables (your choice of storage — DB, CSV, DataFrame):
+  •  orders  — one row per order (id, date, status, channel, customer info, sales rep, shipping cost)
+  •  order_lines  — one row per line item
+For each line item in order_lines, calculate and store:
+  •  line_revenue_local  = quantity × unit_price × (1 – discount_pct / 100)  [in original currency]
+  •  line_revenue_usd    = line_revenue_local converted to USD
+       Use a fixed rate: 1 EUR = 1.08 USD. Store the currency and rate used.
+  •  Include order_id as a foreign key back to orders
+Data quality: Before loading, scan the source data and document at least 2 data quality
+issues you find. For each issue, state: what it is, which records are affected,
+and how you handled it in your pipeline.
+Handle edge cases: cancelled orders, null values, and orders with no discount.
+
+Task 2: Data Model
+Design a star-schema data model suitable for reporting.
+Your model should include:
+  •  A central fact table (fact_sales) at line-item grain
+  •  At least 3 dimension tables: Customer, Product, Date — plus any others you see fit
+  •  All amounts in USD (use line_revenue_usd)
+Deliverable: A diagram showing table names, key columns, and PK/FK relationships.
+(draw.io, dbdiagram.io, Lucidchart, hand-drawn photo — anything is fine)
+Answer these two design questions in your README (3–5 sentences total):
+  Q-A: CUST-1042 'Sarah Mitchell' appears in 3 orders. Look carefully at her data
+       across those orders — something changes. How would you handle this in your model,
+       and what are the trade-offs of your approach?
+  Q-B: If this JSON file were delivered daily with new orders appended,
+       how would you change your pipeline to load only new records?
+
+Task 3: Reporting Layer
+Write 4 SQL queries (or DAX / calculated fields) that a dashboard would use.
+All revenue figures should use line_revenue_usd.
+  Q1 — Monthly revenue trend (Delivered orders only)
+  Q2 — Top products by total USD revenue, with each product's % share of total
+  Q3 — Revenue by customer segment and channel
+  Q4 — For each customer, show: total orders, total USD revenue, and revenue rank
+        among all customers  (hint: a window function is the clean way to do this)
+Create a simple dashboard or mock-up showing these KPIs visually.
+Bonus (optional): Write a short dbt model (or equivalent) for fact_sales.
+
+
+3. Submission Checklist
+Please include all of the following in your submission folder / repository:
+
+orders_raw.json  (the provided file, unmodified)
+Your extraction &amp; load script or notebook (Task 1)
+The populated target tables — exported as CSV or shown in screenshots
+Data quality log — 2+ issues identified, with your handling decision
+Data model diagram (Task 2) — image or link
+Your answers to Q-A (SCD) and Q-B (incremental load) in the README
+Your 4 SQL / DAX queries (Task 3) — in a .sql file or notebook + dashboard files
+A README.md explaining your approach, tools used, assumptions, and AI usage
+
+ℹ  Partially completed submissions are accepted. A good README explaining your decisions is more valuable than rushed code.
+
+
+4. AI Usage Declaration
+We actively encourage using AI tools (ChatGPT, Claude, Copilot, Gemini, etc.). This is part of what we are evaluating.
+
+Please include the following in your README:
+
+Which AI tools you used and for which tasks
+A brief description of the prompts or workflows that were most helpful
+Chat links or export URLs from your AI sessions — e.g.:
+ℹ  ChatGPT shared link: https://chat.openai.com/share/...
+ℹ  Claude project/conversation URL: https://claude.ai/chat/...
+ℹ  GitHub Copilot: describe the context in which it was used
+
+We are not looking for AI-free work. We want to see how you leverage AI effectively, verify outputs, and apply your own judgment.
+
+
+5. Evaluation Criteria
+Area
+What We Look For
+Weight
+Data Engineering (Task 1)
+Parsing, flattening, currency conversion, edge-case handling
+30%
+Data Quality (Task 1)
+Issues identified correctly, handling decisions are sound
+10%
+Data Modeling (Task 2)
+Star-schema, correct grain, SCD &amp; incremental load thinking
+25%
+SQL / Query Quality (Task 3)
+Correct logic, window function used well, % share calculated
+20%
+AI Usage &amp; Transparency
+Documented use of AI, smart prompting, ability to verify output
+15%
+
+
+ℹ  Good luck! If you have any questions about the instructions, feel free to reach out before you start.
+

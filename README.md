@@ -10,7 +10,25 @@ This repository contains the completed pipeline, analytical exports, and dashboa
 
 ---
 
-## Data Model
+## Task 1 — Extract & Load
+
+Source: Assessment Section 2, Task 1; Submission Checklist items for the extraction script, populated target tables, and data quality log.
+
+This pipeline parses `orders_raw.json`, flattens the nested order and line-item structure, calculates `line_revenue_local` and `line_revenue_usd`, stores the exchange rate used, and loads the result into the SQLite target tables.
+
+Key deliverables for this task:
+- Extraction and load logic: [scripts/etl.py](scripts/etl.py)
+- Target schema bootstrap: [scripts/create_schema.py](scripts/create_schema.py)
+- Populated database: `assignment.db`
+- Data quality log: [data_quality_log.md](data_quality_log.md)
+
+The current implementation handles cancelled orders, null values, missing discounts, and currency normalization. The load path also supports the staged tables used for the later dimension build.
+
+---
+
+## Task 2 — Data Model
+
+Source: Assessment Section 2, Task 2; Submission Checklist item for the data model diagram plus the README answers to Q-A and Q-B.
 
 📊 **Star Schema Architecture**
 
@@ -273,6 +291,23 @@ schedule:
 
 ---
 
+## Task 3 — Reporting Layer
+
+Source: Assessment Section 2, Task 3; Submission Checklist item for the four SQL/DAX queries and dashboard files.
+
+This repo’s reporting layer is implemented in [scripts/run_queries.py](scripts/run_queries.py), which exports the four analytical datasets used by the dashboard:
+
+- [exports/monthly_revenue.csv](exports/monthly_revenue.csv) — monthly revenue trend for delivered orders
+- [exports/top_products.csv](exports/top_products.csv) — top products by USD revenue and percentage share
+- [exports/revenue_by_segment_channel.csv](exports/revenue_by_segment_channel.csv) — revenue by customer segment and channel
+- [exports/customer_rank.csv](exports/customer_rank.csv) — customer totals and revenue rank
+
+Dashboard assets:
+- [site/index.html](site/index.html) — static Plotly dashboard that loads the CSV exports
+- [scripts/generate_dashboards.py](scripts/generate_dashboards.py) — optional PNG dashboard mockups
+
+All revenue figures use `line_revenue_usd` as required by the assessment.
+
 ---
 
 ## Quick Start
@@ -311,7 +346,9 @@ The GitHub Actions workflow copies `exports/*.csv` into `site/exports/` and publ
 
 ---
 
-## Data Quality
+## Task 1 — Data Quality
+
+Source: Assessment Section 2, Task 1; Submission Checklist item for the data quality log.
 
 See [Data Quality Log](data_quality_log.md) for detailed findings:
 - **6 quality issues identified** across ETL and dimension build steps
@@ -356,6 +393,8 @@ See [Data Quality Log](data_quality_log.md) for detailed findings:
 
 ## AI Usage Declaration
 
+Source: Assessment Section 4; Submission Checklist item for README AI usage disclosure.
+
 **Tools Used:**
 - GitHub Copilot — code drafting and completion
 - Claude / ChatGPT — ETL design consultation, SQL query structure
@@ -375,6 +414,21 @@ All AI-assisted content was:
 4. **Validated** through export CSV inspection and dashboard rendering
 
 The full transcript of the AI-assisted work is stored in [CHAT_SESSION_FULL.md](CHAT_SESSION_FULL.md).
+
+---
+
+## Submission Checklist Cross-Check
+
+Source: Assessment Section 3.
+
+- `orders_raw.json` provided unmodified: present at the repository root.
+- Extraction and load script or notebook: [scripts/etl.py](scripts/etl.py) and [scripts/create_schema.py](scripts/create_schema.py).
+- Populated target tables: `assignment.db` plus exported CSV outputs in [exports/](exports/).
+- Data quality log: [data_quality_log.md](data_quality_log.md).
+- Data model diagram: [docs/star_schema_diagram.svg](docs/star_schema_diagram.svg).
+- README answers for Q-A and Q-B: included in the Task 2 section above.
+- Four SQL/DAX queries and dashboard files: [scripts/run_queries.py](scripts/run_queries.py), [site/index.html](site/index.html), and [scripts/generate_dashboards.py](scripts/generate_dashboards.py).
+- README approach, tools, assumptions, and AI usage: this file plus [CHAT_SESSION_FULL.md](CHAT_SESSION_FULL.md).
 
 **Key Decisions Made by Engineer:**
 - Choice of SQLite over cloud database (portability)
