@@ -59,7 +59,7 @@ See [Data Model Documentation](docs/DATA_MODEL.md) for the complete schema speci
 
 ## dbt-style model for fact_sales
 
-If this were implemented in dbt, the equivalent model would keep the same grain as the SQLite fact table: one row per order line item.
+If this were implemented in dbt, the equivalent model would keep the same grain as the SQLite fact table: one row per order line item. The model below reflects the current persisted `fact_sales` columns.
 
 ```sql
 with source as (
@@ -71,6 +71,10 @@ with source as (
         order_date_key,
         quantity,
         unit_price_local,
+        discount_pct,
+        line_revenue_local,
+        currency,
+        exchange_rate_usd,
         line_revenue_usd,
         shipping_cost_usd,
         status,
@@ -96,6 +100,10 @@ final as (
 
         quantity,
         unit_price_local,
+        discount_pct,
+        line_revenue_local,
+        currency,
+        exchange_rate_usd,
         line_revenue_usd,
         shipping_cost_usd,
 
@@ -110,6 +118,8 @@ final as (
 select *
 from final
 ```
+
+Note: In SQLite, `fact_sales_id` is currently `AUTOINCREMENT`; in dbt, the surrogate key would typically be generated from business keys as shown above.
 
 ### Why this is the right grain
 - Each fact row represents a single product line within an order.
@@ -128,6 +138,10 @@ SELECT
     order_date_key,
     quantity,
     unit_price_local,
+    discount_pct,
+    line_revenue_local,
+    currency,
+    exchange_rate_usd,
     line_revenue_usd,
     shipping_cost_usd,
     status,
